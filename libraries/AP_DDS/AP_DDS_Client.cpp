@@ -1795,6 +1795,24 @@ void AP_DDS_Client::write_imu_topic()
 }
 #endif  // AP_DDS_IMU_PUB_ENABLED
 
+#if AP_DDS_WHEEL_DATA_PUB_ENABLED
+void AP_DDS_Client::write_wheel_data_topic()
+{
+  WITH_SEMAPHORE(csem);
+  if (connected) {
+    ucdrBuffer ub{};
+    const uint32_t topic_size = sam_msgs_package_msg_WheelData_size_of_topic(&wheel_data_topic, 0);
+    uxr_prepare_output_stream(
+      &session, reliable_out, topics[to_underlying(TopicIndex::WHEEL_DATA_PUB)].dw_id, &ub,
+      topic_size);
+    const bool success = sam_msgs_package_msg_WheelData_serialize_topic(&ub, &wheel_data_topic);
+    if (!success) {
+      // AP_HAL::panic("FATAL: DDS_Client failed to serialize");
+    }
+  }
+}
+#endif
+
 #if AP_DDS_GEOPOSE_PUB_ENABLED
 void AP_DDS_Client::write_geo_pose_topic()
 {
