@@ -24,18 +24,13 @@
 #if AP_DDS_BATTERY_STATE_PUB_ENABLED
 #include "sensor_msgs/msg/BatteryState.h"
 #endif  // AP_DDS_BATTERY_STATE_PUB_ENABLED
+
 #if AP_DDS_IMU_PUB_ENABLED
 #include "sensor_msgs/msg/Imu.h"
 #endif  // AP_DDS_IMU_PUB_ENABLED
 
 #if AP_DDS_WHEEL_DATA_PUB_ENABLED
 #include "sam_msgs_package/msg/WheelData.h"
-sam_msgs_package_msg_WheelData wheel_data_topic;
-// The last ms timestamp AP_DDS wrote a WheelData message
-uint64_t last_wheel_data_time_ms;
-static void update_topic(sam_msgs_package_msg_WheelData & msg);
-//! @brief Serialize the current WheelData and publish to the IO stream(s)
-void write_wheel_data_topic();
 #endif  // AP_DDS_WHEEL_DATA_PUB_ENABLED
 
 #if AP_DDS_STATUS_PUB_ENABLED
@@ -208,6 +203,13 @@ private:
   //! @brief Serialize the current IMU data and publish to the IO stream(s)
   void write_imu_topic();
 #endif  // AP_DDS_IMU_PUB_ENABLED
+
+#if AP_DDS_WHEEL_DATA_PUB_ENABLED
+  sam_msgs_package_msg_WheelData wheel_data_topic;
+  uint64_t last_wheel_data_time_ms;
+  void update_topic(sam_msgs_package_msg_WheelData & msg);
+  void write_wheel_data_topic();
+#endif  // AP_DDS_WHEEL_DATA_PUB_ENABLED
 
 #if AP_DDS_CLOCK_PUB_ENABLED
   rosgraph_msgs_msg_Clock clock_topic;
