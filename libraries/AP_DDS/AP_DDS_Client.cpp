@@ -1980,6 +1980,15 @@ void AP_DDS_Client::update()
     last_geo_pose_time_ms = cur_time_ms;
     write_geo_pose_topic();
   }
+
+#if AP_DDS_WHEEL_DATA_PUB_ENABLED
+  if (cur_time_ms - last_wheel_data_time_ms > DELAY_WHEEL_DATA_TOPIC_MS) {
+    update_topic(wheel_data_topic);
+    last_wheel_data_time_ms = cur_time_ms;
+    write_wheel_data_topic();
+  }
+#endif  // AP_DDS_WHEEL_DATA_PUB_ENABLED
+
 #endif  // AP_DDS_GEOPOSE_PUB_ENABLED
 #if AP_DDS_CLOCK_PUB_ENABLED
   if (cur_time_ms - last_clock_time_ms > DELAY_CLOCK_TOPIC_MS) {
