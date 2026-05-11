@@ -3,9 +3,9 @@
 #include <AP_GPS/AP_GPS_config.h>
 #include <AP_HAL/AP_HAL_Boards.h>
 #include <AP_Networking/AP_Networking_Config.h>
+#include <AP_RSSI/AP_RSSI_config.h>
 #include <AP_VisualOdom/AP_VisualOdom_config.h>
 #include <RC_Channel/RC_Channel_config.h>
-#include <AP_RSSI/AP_RSSI_config.h>
 
 #ifndef AP_DDS_ENABLED
 #define AP_DDS_ENABLED 1
@@ -123,7 +123,7 @@
 #endif
 
 #ifndef AP_DDS_DELAY_GOAL_TOPIC_MS
-#define AP_DDS_DELAY_GOAL_TOPIC_MS  200
+#define AP_DDS_DELAY_GOAL_TOPIC_MS 200
 #endif
 #ifndef AP_DDS_STATUS_PUB_ENABLED
 #define AP_DDS_STATUS_PUB_ENABLED 1
@@ -184,4 +184,12 @@
 
 #ifndef AP_DDS_PARTICIPANT_NAME
 #define AP_DDS_PARTICIPANT_NAME "ap"
+#endif
+
+// WheelData Publisher
+#ifndef AP_DDS_WHEEL_DATA_PUB_ENABLED
+#define AP_DDS_WHEEL_DATA_PUB_ENABLED AP_DDS_ENABLED
+#endif
+#ifndef AP_DDS_DELAY_WHEEL_DATA_TOPIC_MS
+#define AP_DDS_DELAY_WHEEL_DATA_TOPIC_MS 5
 #endif
