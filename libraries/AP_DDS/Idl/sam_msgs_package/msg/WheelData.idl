@@ -1,0 +1,16 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from sam_msgs_package/msg/WheelData.msg
+// generated code does not contain a copyright notice
+
+
+module sam_msgs_package {
+  module msg {
+    struct WheelData {
+      float timestamp;
+
+      uint32 ticks;
+
+      int8 direction;
+    };
+  };
+};
