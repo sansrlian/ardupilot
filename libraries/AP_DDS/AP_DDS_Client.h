@@ -29,7 +29,12 @@
 #endif  // AP_DDS_IMU_PUB_ENABLED
 
 #if AP_DDS_WHEEL_DATA_PUB_ENABLED
-#include "sam_msgs_package/msg/WheelData.h"
+sam_msgs_package_msg_WheelData wheel_data_topic;
+// The last ms timestamp AP_DDS wrote a WheelData message
+uint64_t last_wheel_data_time_ms;
+static void update_topic(sam_msgs_package_msg_WheelData & msg);
+//! @brief Serialize the current WheelData and publish to the IO stream(s)
+void write_wheel_data_topic();
 #endif  // AP_DDS_WHEEL_DATA_PUB_ENABLED
 
 #if AP_DDS_STATUS_PUB_ENABLED
