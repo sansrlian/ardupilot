@@ -698,17 +698,19 @@ void AP_DDS_Client::update_topic(sensor_msgs_msg_Imu & msg)
 #if AP_DDS_WHEEL_DATA_PUB_ENABLED
 void AP_DDS_Client::update_topic(sam_msgs_package_msg_WheelData & msg)
 {
+  msg.timestamp = AP_HAL::millis() * 0.001f;
+
   const AP_WheelEncoder * wheel_encoder = AP::wheelencoder();
   if (wheel_encoder == nullptr) {
+    msg.ticks = 0;
+    msg.direction = 0;
     return;
   }
-  msg.timestamp = AP_HAL::millis() * 0.001f;
   msg.ticks = wheel_encoder->get_total_count(0);
-  // Richtung aus Rate ableiten
   const float rate = wheel_encoder->get_rate(0);
   msg.direction = (rate > 0) ? 1 : (rate < 0) ? -1 : 0;
 }
-#endif  // AP_DDS_WHEEL_DATA_PUB_ENABLED
+#endif
 
 #if AP_DDS_CLOCK_PUB_ENABLED
 void AP_DDS_Client::update_topic(rosgraph_msgs_msg_Clock & msg)
