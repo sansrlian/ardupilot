@@ -179,56 +179,45 @@ private:
 
 #if AP_DDS_BATTERY_STATE_PUB_ENABLED
   sensor_msgs_msg_BatteryState battery_state_topic;
-  // The last ms timestamp AP_DDS wrote a BatteryState message
-  uint64_t last_battery_state_time_ms;
-  //! @brief Serialize the current nav_sat_fix state and publish it to the IO stream(s)
+  uint64_t last_battery_state_time_ms{0};
   void write_battery_state_topic();
   static void update_topic(sensor_msgs_msg_BatteryState & msg, const uint8_t instance);
 #endif  // AP_DDS_BATTERY_STATE_PUB_ENABLED
 
 #if AP_DDS_NAVSATFIX_PUB_ENABLED
   sensor_msgs_msg_NavSatFix nav_sat_fix_topic;
-  // The last ms timestamp AP_DDS wrote a NavSatFix message
-  uint64_t last_nav_sat_fix_time_ms[GPS_MAX_INSTANCES];
-  //! @brief Serialize the current nav_sat_fix state and publish to the IO stream(s)
+  uint64_t last_nav_sat_fix_time_ms[GPS_MAX_INSTANCES]{};
   void write_nav_sat_fix_topic();
   bool update_topic(sensor_msgs_msg_NavSatFix & msg, const uint8_t instance) WARN_IF_UNUSED;
 #endif  // AP_DDS_NAVSATFIX_PUB_ENABLED
 
 #if AP_DDS_IMU_PUB_ENABLED
   sensor_msgs_msg_Imu imu_topic;
-  // The last ms timestamp AP_DDS wrote an IMU message
-  uint64_t last_imu_time_ms;
+  uint64_t last_imu_time_ms{0};
   static void update_topic(sensor_msgs_msg_Imu & msg);
-  //! @brief Serialize the current IMU data and publish to the IO stream(s)
   void write_imu_topic();
 #endif  // AP_DDS_IMU_PUB_ENABLED
 
 #if AP_DDS_WHEEL_DATA_PUB_ENABLED
   sam_msgs_package_msg_WheelData wheel_data_topic;
-  uint64_t last_wheel_data_time_ms;
+  uint64_t last_wheel_data_time_ms{0};
   void update_topic(sam_msgs_package_msg_WheelData & msg);
   void write_wheel_data_topic();
 #endif  // AP_DDS_WHEEL_DATA_PUB_ENABLED
 
 #if AP_DDS_CLOCK_PUB_ENABLED
   rosgraph_msgs_msg_Clock clock_topic;
-  // The last ms timestamp AP_DDS wrote a Clock message
-  uint64_t last_clock_time_ms;
-  //! @brief Serialize the current clock and publish to the IO stream(s)
+  uint64_t last_clock_time_ms{0};
   void write_clock_topic();
   static void update_topic(rosgraph_msgs_msg_Clock & msg);
 #endif  // AP_DDS_CLOCK_PUB_ENABLED
 
 #if AP_DDS_STATUS_PUB_ENABLED
   ardupilot_msgs_msg_Status status_topic;
-  bool update_topic(ardupilot_msgs_msg_Status & msg);
-  // The last ms timestamps AP_DDS wrote/checked/published a status message
-  uint64_t last_status_check_time_ms;
-  uint64_t last_status_publish_time_ms;
-  // last status values;
+  uint64_t last_status_check_time_ms{0};
+  uint64_t last_status_publish_time_ms{0};
   ardupilot_msgs_msg_Status last_status_msg_;
-  //! @brief Serialize the current status and publish to the IO stream(s)
+  bool update_topic(ardupilot_msgs_msg_Status & msg);
   void write_status_topic();
 #endif  // AP_DDS_STATUS_PUB_ENABLED
 
