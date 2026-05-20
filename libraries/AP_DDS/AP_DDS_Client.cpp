@@ -698,6 +698,7 @@ void AP_DDS_Client::update_topic(sensor_msgs_msg_Imu & msg)
 #if AP_DDS_WHEEL_DATA_PUB_ENABLED
 void AP_DDS_Client::update_topic(sam_msgs_package_msg_WheelData & msg)
 {
+  /*
   msg.timestamp = AP_HAL::millis() * 0.001f;
 
   const AP_WheelEncoder * wheel_encoder = AP::wheelencoder();
@@ -708,7 +709,12 @@ void AP_DDS_Client::update_topic(sam_msgs_package_msg_WheelData & msg)
   }
   msg.ticks = wheel_encoder->get_total_count(0);
   const float rate = wheel_encoder->get_rate(0);
-  msg.direction = (rate > 0) ? 1 : (rate < 0) ? -1 : 0;
+  msg.direction = (rate > 0) ? 1 : (rate < 0) ? -1 : 0; */
+
+  msg.timestamp = AP_HAL::millis() * 0.001f;
+  msg.ticks = 42;
+  msg.direction = 1;
+  GCS_SEND_TEXT(MAV_SEVERITY_INFO, "DDS: WheelData update called");
 }
 #endif
 
