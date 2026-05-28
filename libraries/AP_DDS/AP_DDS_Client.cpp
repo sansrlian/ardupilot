@@ -692,6 +692,35 @@ void AP_DDS_Client::update_topic(sensor_msgs_msg_Imu & msg)
   msg.angular_velocity.x = gyro_data.x;
   msg.angular_velocity.y = gyro_data.y;
   msg.angular_velocity.z = gyro_data.z;
+
+  // Covariance
+
+  auto * ekf3 = AP::ekf3();
+  auto * core = ekf3->get_primary_core();
+
+  float angVar[3];
+  float accVar[3];
+
+  core->getGyroVariance(angVar);   // liefert Varianzen für x,y,z
+  core->getAccelVariance(accVar);  // liefert Varianzen für x,y,z
+
+  // EKF3 liefert keine direkte Orientierung-Varianz
+  for (int i = 0; i < 9; i++) msg.orientation_covariance[i] = 0.0;
+  msg.orientation_covariance[0] = 0.01;
+  msg.orientation_covariance[4] = 0.01;
+  msg.orientation_covariance[8] = 0.02;
+
+  // Angular velocity covariance
+  for (int i = 0; i < 9; i++) msg.angular_velocity_covariance[i] = 0.0;
+  msg.angular_velocity_covariance[0] = angVar[0];
+  msg.angular_velocity_covariance[4] = angVar[1];
+  msg.angular_velocity_covariance[8] = angVar[2];
+
+  // Linear acceleration covariance
+  for (int i = 0; i < 9; i++) msg.linear_acceleration_covariance[i] = 0.0;
+  msg.linear_acceleration_covariance[0] = accVar[0];
+  msg.linear_acceleration_covariance[4] = accVar[1];
+  msg.linear_acceleration_covariance[8] = accVar[2];
 }
 #endif  // AP_DDS_IMU_PUB_ENABLED
 
