@@ -68,6 +68,10 @@ enum class TopicIndex : uint8_t
   WHEEL_DATA_PUB,
 #endif  // AP_DDS_WHEEL_DATA_PUB_ENABLED
 
+#if AP_DDS_NAV_ODOM_PUB_ENABLED
+  NAV_ODOM_PUB,
+#endif  // AP_DDS_NAV_ODOM_PUB_ENABLED
+
 #if AP_DDS_JOY_SUB_ENABLED
   JOY_SUB,
 #endif  // AP_DDS_JOY_SUB_ENABLED
@@ -398,6 +402,34 @@ constexpr struct AP_DDS_Client::Topic_table AP_DDS_Client::topics[] =
         },
     },
 #endif  // AP_DDS_WHEEL_DATA_PUB_ENABLED
+
+#if AP_DDS_NAV_ODOM_PUB_ENABLED
+    {
+      .topic_id = to_underlying(TopicIndex::NAV_ODOM_PUB),
+      .pub_id = to_underlying(TopicIndex::NAV_ODOM_PUB),
+      .sub_id = to_underlying(TopicIndex::NAV_ODOM_PUB),
+
+      .dw_id =
+        uxrObjectId{.id = to_underlying(TopicIndex::NAV_ODOM_PUB), .type = UXR_DATAWRITER_ID},
+
+      .dr_id =
+        uxrObjectId{.id = to_underlying(TopicIndex::NAV_ODOM_PUB), .type = UXR_DATAREADER_ID},
+
+      .topic_rw = Topic_rw::DataWriter,
+
+      .topic_name = "rt/nav/odom",
+
+      .type_name = "nav_msgs::msg::dds_::Odometry_",
+
+      .qos =
+        {
+          .durability = UXR_DURABILITY_VOLATILE,
+          .reliability = UXR_RELIABILITY_BEST_EFFORT,
+          .history = UXR_HISTORY_KEEP_LAST,
+          .depth = 5,
+        },
+    },
+#endif
 
 #if AP_DDS_JOY_SUB_ENABLED
     {

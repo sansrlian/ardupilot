@@ -33,6 +33,9 @@
 #include "sam_msgs_package/msg/WheelData.h"
 #endif  // AP_DDS_WHEEL_DATA_PUB_ENABLED
 
+#if AP_DDS_NAV_ODOM_PUB_ENABLED
+#include "nav_msgs/msg/Odometry.h"  //Pfad von generierten Headern
+
 #if AP_DDS_STATUS_PUB_ENABLED
 #include "ardupilot_msgs/msg/Status.h"
 #endif  // AP_DDS_STATUS_PUB_ENABLED
@@ -204,6 +207,17 @@ private:
   void update_topic(sam_msgs_package_msg_WheelData & msg);
   void write_wheel_data_topic();
 #endif  // AP_DDS_WHEEL_DATA_PUB_ENABLED
+
+#if AP_DDS_NAV_ODOM_PUB_ENABLED
+  void write_nav_odom_topic();
+  void update_topic(nav_msgs_msg_Odometry & msg);
+#endif
+
+#if AP_DDS_NAV_ODOM_PUB_ENABLED
+  nav_msgs_msg_Odometry odom_topic{};
+  uint32_t last_nav_odom_time_ms = 0;
+  static constexpr uint16_t DELAY_NAV_ODOM_TOPIC_MS = 50;  // 20 Hz
+#endif
 
 #if AP_DDS_CLOCK_PUB_ENABLED
   rosgraph_msgs_msg_Clock clock_topic;

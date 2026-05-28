@@ -698,7 +698,6 @@ void AP_DDS_Client::update_topic(sensor_msgs_msg_Imu & msg)
 #if AP_DDS_WHEEL_DATA_PUB_ENABLED
 void AP_DDS_Client::update_topic(sam_msgs_package_msg_WheelData & msg)
 {
-  /*
   msg.timestamp = AP_HAL::millis() * 0.001f;
 
   const AP_WheelEncoder * wheel_encoder = AP::wheelencoder();
@@ -709,12 +708,81 @@ void AP_DDS_Client::update_topic(sam_msgs_package_msg_WheelData & msg)
   }
   msg.ticks = wheel_encoder->get_total_count(0);
   const float rate = wheel_encoder->get_rate(0);
-  msg.direction = (rate > 0) ? 1 : (rate < 0) ? -1 : 0; */
+  msg.direction = (rate > 0) ? 1 : (rate < 0) ? -1 : 0;
+}
+#endif
 
-  msg.timestamp = AP_HAL::millis() * 0.001f;
-  msg.ticks = 42;
-  msg.direction = 1;
-  GCS_SEND_TEXT(MAV_SEVERITY_INFO, "DDS: WheelData update called");
+#if AP_DDS_NAV_ODOM_PUB_ENABLED
+void AP_DDS_Client::update_topic(nav_msgs_msg_Odometry & msg)
+{
+  const uint32_t now_ms = AP_HAL::millis();
+
+  // Zeitstempel
+  msg.header.stamp.sec = now_ms / 1000;
+  msg.header.stamp.nanosec = (now_ms % 1000) * 1000000U;
+
+  msg.header.frame_id = "odom";
+  msg.child_frame_id = "base_link";
+
+  // EKF3 holen
+  auto * ekf3 = AP::ekf3();
+  if (ekf3 == nullptr) {
+    GCS_SEND_TEXT(MAV_SEVERITY_ERROR, "DDS: EKF3 not available");
+    return;
+  }
+
+  NavEKF3_core * core = ekf3->get_primary_core();
+  if (core == nullptr) {
+    GCS_SEND_TEXT(MAV_SEVERITY_ERROR, "DDS: EKF3 core not available");
+    return;
+  }
+
+  // Position im lokalen NED-Frame
+  Vector3f pos_ned;
+  if (!core->getPosNED(pos_ned)) {
+    // Keine valide Position
+    return;
+  }
+
+  // NED → Odom-Frame (x=N, y=E, z=Up)
+  msg.pose.pose.position.x = pos_ned.x;   // N
+  msg.pose.pose.position.y = pos_ned.y;   // E
+  msg.pose.pose.position.z = -pos_ned.z;  // Down → Up
+
+  // Orientierung aus EKF3 (Euler → Quaternion)
+  float roll, pitch, yaw;
+  core->getEulerAngles(roll, pitch, yaw);
+
+  Quaternion q = Quaternion::from_euler(roll, pitch, yaw);
+
+  msg.pose.pose.orientation.x = q.x;
+  msg.pose.pose.orientation.y = q.y;
+  msg.pose.pose.orientation.z = q.z;
+  msg.pose.pose.orientation.w = q.w;
+
+  // Geschwindigkeit im NED-Frame
+  Vector3f vel_ned;
+  if (!core->getVelNED(vel_ned)) {
+    vel_ned = Vector3f{};
+  }
+
+  msg.twist.twist.linear.x = vel_ned.x;   // N
+  msg.twist.twist.linear.y = vel_ned.y;   // E
+  msg.twist.twist.linear.z = -vel_ned.z;  // Down → Up
+
+  // Gyro (Body-Frame) für Angular Velocity
+  Vector3f gyro;
+  core->getGyro(gyro);
+
+  msg.twist.twist.angular.x = gyro.x;
+  msg.twist.twist.angular.y = gyro.y;
+  msg.twist.twist.angular.z = gyro.z;
+
+  // Covariances erstmal 0
+  for (int i = 0; i < 36; i++) {
+    msg.pose.covariance[i] = 0.0;
+    msg.twist.covariance[i] = 0.0;
+  }
 }
 #endif
 
@@ -1825,6 +1893,27 @@ void AP_DDS_Client::write_wheel_data_topic()
 }
 #endif
 
+#if AP_DDS_NAV_ODOM_PUB_ENABLED
+void AP_DDS_Client::write_nav_odom_topic()
+{
+  WITH_SEMAPHORE(csem);
+  if (connected) {
+    ucdrBuffer ub{};
+    const uint32_t topic_size = nav_msgs_msg_Odometry_size_of_topic(&odom_topic, 0);
+
+    uxr_prepare_output_stream(
+      &session, reliable_out, topics[to_underlying(TopicIndex::NAV_ODOM_PUB)].dw_id, &ub,
+      topic_size);
+
+    const bool success = nav_msgs_msg_Odometry_serialize_topic(&ub, &odom_topic);
+
+    if (!success) {
+      GCS_SEND_TEXT(MAV_SEVERITY_ERROR, "DDS: nav/odom serialize failed");
+    }
+  }
+}
+#endif
+
 #if AP_DDS_GEOPOSE_PUB_ENABLED
 void AP_DDS_Client::write_geo_pose_topic()
 {
@@ -2000,6 +2089,15 @@ void AP_DDS_Client::update()
     write_wheel_data_topic();
   }
 #endif  // AP_DDS_WHEEL_DATA_PUB_ENABLED
+
+#if AP_DDS_NAV_ODOM_PUB_ENABLED
+  const uint32_t cur_time_ms = AP_HAL::millis();
+  if (cur_time_ms - last_nav_odom_time_ms > DELAY_NAV_ODOM_TOPIC_MS) {
+    update_topic(odom_topic);
+    last_nav_odom_time_ms = cur_time_ms;
+    write_nav_odom_topic();
+  }
+#endif
 
 #endif  // AP_DDS_GEOPOSE_PUB_ENABLED
 #if AP_DDS_CLOCK_PUB_ENABLED
