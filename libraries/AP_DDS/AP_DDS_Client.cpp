@@ -747,8 +747,8 @@ void AP_DDS_Client::update_topic(nav_msgs_msg_Odometry & msg)
   msg.header.stamp.sec = now_ms / 1000;
   msg.header.stamp.nanosec = (now_ms % 1000) * 1000000U;
 
-  msg.header.frame_id = "odom";
-  msg.child_frame_id = "base_link";
+  STRCPY(msg.header.frame_id, "odom");
+  STRCPY(msg.child_frame_id, "base_link");
 
   // EKF3 holen
   auto * ekf3 = AP::ekf3();
