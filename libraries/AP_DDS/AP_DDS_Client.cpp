@@ -750,67 +750,106 @@ void AP_DDS_Client::update_topic(nav_msgs_msg_Odometry & msg)
   STRCPY(msg.header.frame_id, "odom");
   STRCPY(msg.child_frame_id, "base_link");
 
-  // EKF3 holen
-  auto * ekf3 = AP::ekf3();
-  if (ekf3 == nullptr) {
-    GCS_SEND_TEXT(MAV_SEVERITY_ERROR, "DDS: EKF3 not available");
-    return;
-  }
+  auto & ahrs = AP::ahrs();
+  WITH_SEMAPHORE(ahrs.get_semaphore());
 
-  NavEKF3_core * core = ekf3->get_primary_core();
-  if (core == nullptr) {
-    GCS_SEND_TEXT(MAV_SEVERITY_ERROR, "DDS: EKF3 core not available");
-    return;
-  }
-
-  // Position im lokalen NED-Frame
+  // Position im lokalen NED-Frame abfragen
   Vector3f pos_ned;
-  if (!core->getPosNED(pos_ned)) {
-    // Keine valide Position
+  if (!ahrs.get_relative_position_NED_origin_float(pos_ned)) {
+    // Wenn keine valide Position vorliegt (z. B. kein EKF-Fix), abbrechen
     return;
   }
 
-  // NED → Odom-Frame (x=N, y=E, z=Up)
+  // NED → Ihr Odom-Frame (x=N, y=E, z=Up)
   msg.pose.pose.position.x = pos_ned.x;   // N
   msg.pose.pose.position.y = pos_ned.y;   // E
   msg.pose.pose.position.z = -pos_ned.z;  // Down → Up
 
-  // Orientierung aus EKF3 (Euler → Quaternion)
-  float roll, pitch, yaw;
-  core->getEulerAngles(roll, pitch, yaw);
+  // Orientierung direkt als Quaternion aus der AHRS holen
+  Quaternion q;
+  if (ahrs.get_quaternion(q)) {
+    msg.pose.pose.orientation.x = q.q2;  // x ist q2 in ArduPilot Quaternion
+    msg.pose.pose.orientation.y = q.q3;  // y ist q3
+    msg.pose.pose.orientation.z = q.q4;  // z ist q4
+    msg.pose.pose.orientation.w = q.q1;  // w ist q1
+  } else {
+    // Fallback auf Identität, falls Orientierung ungültig
+    msg.pose.pose.orientation.x = 0.0;
+    msg.pose.pose.orientation.y = 0.0;
+    msg.pose.pose.orientation.z = 0.0;
+    msg.pose.pose.orientation.w = 1.0;
+  }
 
-  Quaternion q = Quaternion::from_euler(roll, pitch, yaw);
-
-  msg.pose.pose.orientation.x = q.x;
-  msg.pose.pose.orientation.y = q.y;
-  msg.pose.pose.orientation.z = q.z;
-  msg.pose.pose.orientation.w = q.w;
-
-  // Geschwindigkeit im NED-Frame
+  // Geschwindigkeit im NED-Frame abfragen
   Vector3f vel_ned;
-  if (!core->getVelNED(vel_ned)) {
+  if (!ahrs.get_velocity_NED(vel_ned)) {
     vel_ned = Vector3f{};
   }
 
+  // NED → Ihr Odom-Frame (x=N, y=E, z=Up)
   msg.twist.twist.linear.x = vel_ned.x;   // N
   msg.twist.twist.linear.y = vel_ned.y;   // E
   msg.twist.twist.linear.z = -vel_ned.z;  // Down → Up
 
-  // Gyro (Body-Frame) für Angular Velocity
-  Vector3f gyro;
-  core->getGyro(gyro);
+  // Gyro-Daten (Drehraten im Body-Frame) holen
+  const Vector3f & gyro = ahrs.get_gyro();
 
   msg.twist.twist.angular.x = gyro.x;
   msg.twist.twist.angular.y = gyro.y;
   msg.twist.twist.angular.z = gyro.z;
 
-  // Covariances erstmal 0
+  // 1. Alle Kovarianzen zuerst auf 0 initialisieren
   for (int i = 0; i < 36; i++) {
     msg.pose.covariance[i] = 0.0;
     msg.twist.covariance[i] = 0.0;
   }
+
+  // 2. Unsicherheiten von der AHRS/EKF3 abfragen
+  float pos_horiz_m = 0.1f;
+  float pos_vert_m = 0.2f;
+  float vel_m_s = 0.1f;
+
+  // Wenn der EKF3 valide Schätzungen hat, überschreiben wir die Defaults
+  if (ahrs.get_pos_vel_uncertainty(pos_horiz_m, pos_vert_m, vel_m_s)) {
+    // Quadrieren, um die Varianzen zu erhalten
+    const float var_pos_horiz = pos_horiz_m * pos_horiz_m;
+    const float var_pos_vert = pos_vert_m * pos_vert_m;
+    const float var_vel = vel_m_s * vel_m_s;
+
+    // Pose-Kovarianz (Position x, y, z auf der Diagonale eines 6x6-Layouts)
+    msg.pose.covariance[0] = var_pos_horiz;  // X (North)
+    msg.pose.covariance[7] = var_pos_horiz;  // Y (East)
+    msg.pose.covariance[14] = var_pos_vert;  // Z (Up)
+
+    // Twist-Kovarianz (Lineargeschwindigkeit x, y, z auf der Diagonale)
+    msg.twist.covariance[0] = var_vel;   // vx
+    msg.twist.covariance[7] = var_vel;   // vy
+    msg.twist.covariance[14] = var_vel;  // vz
+  } else {
+    // Wenn EKF3 noch keine Schätzung hat, setzen wir einen sehr großen Fehler (100m Variance)
+    // Damit weiß ROS, dass die Daten aktuell nicht vertrauenswürdig sind.
+    msg.pose.covariance[0] = 10000.0;
+    msg.pose.covariance[7] = 10000.0;
+    msg.pose.covariance[14] = 10000.0;
+  }
+
+  // 3. Orientierungs-Kovarianzen befüllen (Roll, Pitch, Yaw)
+  const float err_rp = ahrs.get_error_rp();    // Roll/Pitch Fehler in rad
+  const float err_yaw = ahrs.get_error_yaw();  // Yaw Fehler in rad
+
+  const float var_rp = err_rp * err_rp;
+  const float var_yaw = err_yaw * err_yaw;
+
+  msg.pose.covariance[21] = var_rp;   // Roll
+  msg.pose.covariance[28] = var_rp;   // Pitch
+  msg.pose.covariance[35] = var_yaw;  // Yaw
+
+  // 4. Drehraten-Kovarianz (Aus dem Datenblatt Ihres Gyroskops oder festen Schätzungen)
+  msg.twist.covariance[21] = 0.0001;  // Roll-Rate
+  msg.twist.covariance[28] = 0.0001;  // Pitch-Rate
+  msg.twist.covariance[35] = 0.0002;  // Yaw-Rate
 }
-#endif
+#endif  // AP_DDS_NAV_ODOM_PUB_ENABLED
 
 #if AP_DDS_CLOCK_PUB_ENABLED
 void AP_DDS_Client::update_topic(rosgraph_msgs_msg_Clock & msg)
