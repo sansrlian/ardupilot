@@ -42,6 +42,10 @@
 #include <AP_WheelEncoder/AP_WheelEncoder.h>
 #endif
 
+#if AP_DDS_JOINT_STATE_PUB_ENABLED
+#include <SRV_Channel/SRV_Channel.h>
+#endif
+
 #if AP_EXTERNAL_CONTROL_ENABLED
 #include "AP_DDS_ExternalControl.h"
 #endif  // AP_EXTERNAL_CONTROL_ENABLED
@@ -850,6 +854,45 @@ void AP_DDS_Client::update_topic(nav_msgs_msg_Odometry & msg)
   msg.twist.covariance[35] = 0.0002;  // Yaw-Rate
 }
 #endif  // AP_DDS_NAV_ODOM_PUB_ENABLED
+
+#if AP_DDS_JOINT_STATE_PUB_ENABLED
+
+void AP_DDS_Client::update_topic(sensor_msgs_msg_JointState & msg)
+{
+  const uint32_t now_ms = AP_HAL::millis();
+  msg.header.stamp.sec = now_ms / 1000;
+  msg.header.stamp.nanosec = (now_ms % 1000) * 1000000U;
+  STRCPY(msg.header.frame_id, "base_link");
+
+  msg.name_size = 4;
+  STRCPY(msg.name[0], "motor_1");
+  STRCPY(msg.name[1], "motor_2");
+  STRCPY(msg.name[2], "motor_3");
+  STRCPY(msg.name[3], "motor_4");
+
+  msg.position_size = 4;
+  msg.position[0] = SRV_Channels::get_output_scaled(SRV_Channel::k_motor1);
+  msg.position[1] = SRV_Channels::get_output_scaled(SRV_Channel::k_motor2);
+  msg.position[2] = SRV_Channels::get_output_scaled(SRV_Channel::k_motor3);
+  msg.position[3] = SRV_Channels::get_output_scaled(SRV_Channel::k_motor4);
+
+  msg.velocity_size = 4;
+  for (uint8_t i = 0; i < 4; i++) {
+    float rpm = 0.0f;
+    // RPM für Motor i auslesen
+    if (AP::esc_telem().get_rpm(i, rpm)) {
+      // Umrechnung: RPM (Umdrehungen pro Minute) in rad/s
+      // (1 RPM = 2 * pi / 60 rad/s)
+      msg.velocity[i] = rpm * (2.0f * M_PI / 60.0f);
+    } else {
+      msg.velocity[i] = 0.0;
+    }
+  }
+
+  msg.effort_size = 0;
+}
+
+#endif  // AP_DDS_JOINT_STATE_PUB_ENABLED
 
 #if AP_DDS_CLOCK_PUB_ENABLED
 void AP_DDS_Client::update_topic(rosgraph_msgs_msg_Clock & msg)
@@ -1979,6 +2022,30 @@ void AP_DDS_Client::write_nav_odom_topic()
 }
 #endif
 
+#if AP_DDS_JOINT_STATE_PUB_ENABLED
+void AP_DDS_Client::write_joint_state_topic()
+{
+  WITH_SEMAPHORE(csem);
+  if (connected) {
+    ucdrBuffer ub{};
+    // 1. Größe des serialisierten JointState-Topics berechnen
+    const uint32_t topic_size = sensor_msgs_msg_JointState_size_of_topic(&joint_state_topic, 0);
+
+    // 2. XRCE-DDS Ausgabepuffer vorbereiten
+    uxr_prepare_output_stream(
+      &session, reliable_out, topics[to_underlying(TopicIndex::JOINT_STATE_PUB)].dw_id, &ub,
+      topic_size);
+
+    // 3. Daten in den Puffer serialisieren
+    const bool success = sensor_msgs_msg_JointState_serialize_topic(&ub, &joint_state_topic);
+
+    if (!success) {
+      GCS_SEND_TEXT(MAV_SEVERITY_ERROR, "DDS: joint_states serialize failed");
+    }
+  }
+}
+#endif  // AP_DDS_JOINT_STATE_PUB_ENABLED
+
 #if AP_DDS_GEOPOSE_PUB_ENABLED
 void AP_DDS_Client::write_geo_pose_topic()
 {
@@ -2161,6 +2228,14 @@ void AP_DDS_Client::update()
     update_topic(odom_topic);
     last_nav_odom_time_ms = cur_time_ms;
     write_nav_odom_topic();
+  }
+#endif
+
+#if AP_DDS_JOINT_STATE_PUB_ENABLED
+  if (cur_time_ms - last_joint_state_time_ms > DELAY_JOINT_STATE_TOPIC_MS) {
+    update_topic(joint_state_topic);
+    last_joint_state_time_ms = cur_time_ms;
+    write_joint_state_topic();
   }
 #endif
 

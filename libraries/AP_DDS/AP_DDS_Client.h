@@ -37,6 +37,10 @@
 #include "nav_msgs/msg/Odometry.h"  //Pfad von generierten Headern
 #endif
 
+#if AP_DDS_JOINT_STATE_PUB_ENABLED
+#include "sensor_msgs/msg/JointState.h"
+#endif
+
 #if AP_DDS_STATUS_PUB_ENABLED
 #include "ardupilot_msgs/msg/Status.h"
 #endif  // AP_DDS_STATUS_PUB_ENABLED
@@ -83,6 +87,7 @@
 #define DDS_MTU 512
 #define DDS_STREAM_HISTORY 8
 #define DDS_BUFFER_SIZE DDS_MTU * DDS_STREAM_HISTORY
+#define DELAY_JOINT_STATE_TOPIC_MS 20
 
 #if AP_DDS_UDP_ENABLED
 #include <AP_HAL/utility/Socket.h>
@@ -201,6 +206,13 @@ private:
   static void update_topic(sensor_msgs_msg_Imu & msg);
   void write_imu_topic();
 #endif  // AP_DDS_IMU_PUB_ENABLED
+
+#if AP_DDS_JOINT_STATE_PUB_ENABLED
+  static void update_topic(sensor_msgs_msg_JointState & msg);
+  sensor_msgs_msg_JointState joint_state_topic;
+  uint32_t last_joint_state_time_ms;
+  void write_joint_state_topic();
+#endif
 
 #if AP_DDS_WHEEL_DATA_PUB_ENABLED
   sam_msgs_package_msg_WheelData wheel_data_topic;

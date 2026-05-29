@@ -9,6 +9,10 @@
 #include "sensor_msgs/msg/Imu.h"
 #endif  // AP_DDS_IMU_PUB_ENABLED
 
+#if AP_DDS_JOINT_STATE_PUB_ENABLED
+#include "sensor_msgs/msg/JointState.h"
+#endif
+
 #if AP_DDS_WHEEL_DATA_PUB_ENABLED
 #include "sam_msgs_package/msg/WheelData.h"
 #endif  // AP_DDS_WHEEL_DATA_PUB_ENABLED
@@ -21,6 +25,10 @@
 
 enum class TopicIndex : uint8_t
 {
+
+#if AP_DDS_JOINT_STATE_PUB_ENABLED
+  JOINT_STATE_PUB,
+#endif
 #if AP_DDS_TIME_PUB_ENABLED
   TIME_PUB,
 #endif  // AP_DDS_TIME_PUB_ENABLED
@@ -430,6 +438,24 @@ constexpr struct AP_DDS_Client::Topic_table AP_DDS_Client::topics[] =
         },
     },
 #endif
+
+#if AP_DDS_JOINT_STATE_PUB_ENABLED
+    {.topic_id = to_underlying(TopicIndex::JOINT_STATE_PUB),
+     .pub_id = to_underlying(TopicIndex::JOINT_STATE_PUB),
+     .sub_id = to_underlying(TopicIndex::JOINT_STATE_PUB),
+     .dw_id =
+       uxrObjectId{.id = to_underlying(TopicIndex::JOINT_STATE_PUB), .type = UXR_DATAWRITER_ID},
+     .dr_id = uxrObjectId{.id = 0, .type = 0},
+     .topic_name = "rt/ap/joint_states",
+     .type_name = "sensor_msgs::msg::dds_::JointState_",
+     .qos =
+       {
+         .durability = UXR_DURABILITY_VOLATILE,
+         .reliability = UXR_RELIABILITY_BEST_EFFORT,
+         .history = UXR_HISTORY_KEEP_LAST,
+         .depth = 5,
+       }},
+#endif  // AP_DDS_JOINT_STATE_PUB_ENABLED
 
 #if AP_DDS_JOY_SUB_ENABLED
     {
