@@ -35,6 +35,7 @@
 
 #if AP_DDS_NAV_ODOM_PUB_ENABLED
 #include "nav_msgs/msg/Odometry.h"  //Pfad von generierten Headern
+#endif
 
 #if AP_DDS_STATUS_PUB_ENABLED
 #include "ardupilot_msgs/msg/Status.h"
