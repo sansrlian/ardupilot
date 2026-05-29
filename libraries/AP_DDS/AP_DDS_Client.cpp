@@ -2156,7 +2156,7 @@ void AP_DDS_Client::update()
 #endif  // AP_DDS_WHEEL_DATA_PUB_ENABLED
 
 #if AP_DDS_NAV_ODOM_PUB_ENABLED
-  const uint32_t cur_time_ms = AP_HAL::millis();
+
   if (cur_time_ms - last_nav_odom_time_ms > DELAY_NAV_ODOM_TOPIC_MS) {
     update_topic(odom_topic);
     last_nav_odom_time_ms = cur_time_ms;

@@ -3837,7 +3837,7 @@ float AP_AHRS::get_air_density_ratio(void) const
 
 bool AP_AHRS::get_gyro_variance(float var[3]) const
 {
-#if HAL_NAVEKF3_AVAILABLE
+#if AP_AHRS_NAVEKF3_ENABLED
   if (active_EKF_type() == EKFType::THREE) {
     return ekf3.EKF3.getGyroVariance(var);
   }
@@ -3847,7 +3847,7 @@ bool AP_AHRS::get_gyro_variance(float var[3]) const
 
 bool AP_AHRS::get_accel_variance(float var[3]) const
 {
-#if HAL_NAVEKF3_AVAILABLE
+#if AP_AHRS_NAVEKF3_ENABLED
   if (active_EKF_type() == EKFType::THREE) {
     return ekf3.EKF3.getAccelVariance(var);
   }
@@ -3858,7 +3858,7 @@ bool AP_AHRS::get_accel_variance(float var[3]) const
 bool AP_AHRS::get_pos_vel_uncertainty(
   float & pos_horiz_m, float & pos_vert_m, float & vel_m_s) const
 {
-#if HAL_NAVEKF3_AVAILABLE
+#if AP_AHRS_NAVEKF3_ENABLED
   if (active_EKF_type() == EKFType::THREE) {
     return ekf3.EKF3.getPosVelUncertainty(pos_horiz_m, pos_vert_m, vel_m_s);
   }

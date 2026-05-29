@@ -866,6 +866,7 @@ public:
 
   bool get_gyro_variance(float var[3]) const;
   bool get_accel_variance(float var[3]) const;
+  bool get_pos_vel_uncertainty(float & pos_horiz_m, float & pos_vert_m, float & vel_m_s) const;
 
 private:
   // roll/pitch/yaw euler angles, all in radians
@@ -1149,8 +1150,6 @@ private:
   // This may save the user from having to set the origin manually when using position controlled
   // modes without GPS
   void record_origin();
-
-  bool get_pos_vel_uncertainty(float & pos_horiz_m, float & pos_vert_m, float & vel_m_s) const;
 
   /*
     state updated at the end of each update() call
