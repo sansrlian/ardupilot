@@ -694,29 +694,26 @@ void AP_DDS_Client::update_topic(sensor_msgs_msg_Imu & msg)
   msg.angular_velocity.z = gyro_data.z;
 
   // Covariance
+  float angVar[3] = {0.0f, 0.0f, 0.0f};
+  float accVar[3] = {0.0f, 0.0f, 0.0f};
 
-  auto * ekf3 = AP::ekf3();
-  auto * core = ekf3->get_primary_core();
+  // Natively fetch EKF3 variances via AHRS
+  ahrs.get_gyro_variance(angVar);
+  ahrs.get_accel_variance(accVar);
 
-  float angVar[3];
-  float accVar[3];
-
-  core->getGyroVariance(angVar);   // liefert Varianzen für x,y,z
-  core->getAccelVariance(accVar);  // liefert Varianzen für x,y,z
-
-  // EKF3 liefert keine direkte Orientierung-Varianz
+  // EKF3 does not provide a direct orientation covariance
   for (int i = 0; i < 9; i++) msg.orientation_covariance[i] = 0.0;
   msg.orientation_covariance[0] = 0.01;
   msg.orientation_covariance[4] = 0.01;
   msg.orientation_covariance[8] = 0.02;
 
-  // Angular velocity covariance
+  // Angular velocity covariance (populated with gyro bias variance)
   for (int i = 0; i < 9; i++) msg.angular_velocity_covariance[i] = 0.0;
   msg.angular_velocity_covariance[0] = angVar[0];
   msg.angular_velocity_covariance[4] = angVar[1];
   msg.angular_velocity_covariance[8] = angVar[2];
 
-  // Linear acceleration covariance
+  // Linear acceleration covariance (populated with accel bias variance)
   for (int i = 0; i < 9; i++) msg.linear_acceleration_covariance[i] = 0.0;
   msg.linear_acceleration_covariance[0] = accVar[0];
   msg.linear_acceleration_covariance[4] = accVar[1];
