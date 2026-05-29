@@ -703,3 +703,18 @@ void NavEKF3_core::getAccelVariance(float var[3]) const
   var[1] = P[14][14];
   var[2] = P[15][15];
 }
+
+bool NavEKF3_core::getPosVelUncertainty(
+  float & pos_horiz_m, float & pos_vert_m, float & vel_m_s) const
+{
+  if (!statesInitialised) {
+    return false;
+  }
+  // Horizontale Position: 2D RMS aus den N- und E-Positionsvarianzen
+  pos_horiz_m = sqrtF(P[7][7] + P[8][8]);
+  // Vertikale Position: 1-Sigma aus der D-Positionsvarianz
+  pos_vert_m = sqrtF(P[9][9]);
+  // Geschwindigkeit: Worst-case 3D-Geschwindigkeitsunsicherheit
+  vel_m_s = sqrtF(P[4][4] + P[5][5] + P[6][6]);
+  return true;
+}

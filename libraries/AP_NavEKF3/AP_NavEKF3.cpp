@@ -2465,3 +2465,11 @@ bool NavEKF3::getAccelVariance(float var[3]) const
   core[primary].getAccelVariance(var);
   return true;
 }
+
+bool NavEKF3::getPosVelUncertainty(float & pos_horiz_m, float & pos_vert_m, float & vel_m_s) const
+{
+  if (!core) {
+    return false;
+  }
+  return core[primary].getPosVelUncertainty(pos_horiz_m, pos_vert_m, vel_m_s);
+}

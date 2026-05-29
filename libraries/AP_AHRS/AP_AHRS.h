@@ -1150,6 +1150,8 @@ private:
   // modes without GPS
   void record_origin();
 
+  bool get_pos_vel_uncertainty(float & pos_horiz_m, float & pos_vert_m, float & vel_m_s) const;
+
   /*
     state updated at the end of each update() call
    */

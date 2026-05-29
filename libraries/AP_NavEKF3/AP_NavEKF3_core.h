@@ -520,6 +520,7 @@ public:
 
   void getGyroVariance(float var[3]) const;
   void getAccelVariance(float var[3]) const;
+  bool getPosVelUncertainty(float & pos_horiz_m, float & pos_vert_m, float & vel_m_s) const;
 
 private:
   EKFGSF_yaw * yawEstimator;

@@ -3855,6 +3855,17 @@ bool AP_AHRS::get_accel_variance(float var[3]) const
   return false;
 }
 
+bool AP_AHRS::get_pos_vel_uncertainty(
+  float & pos_horiz_m, float & pos_vert_m, float & vel_m_s) const
+{
+#if HAL_NAVEKF3_AVAILABLE
+  if (active_EKF_type() == EKFType::THREE) {
+    return ekf3.EKF3.getPosVelUncertainty(pos_horiz_m, pos_vert_m, vel_m_s);
+  }
+#endif
+  return false;
+}
+
 // singleton instance
 AP_AHRS * AP_AHRS::_singleton;
 
