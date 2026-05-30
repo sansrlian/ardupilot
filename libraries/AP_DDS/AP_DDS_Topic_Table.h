@@ -26,6 +26,10 @@
 enum class TopicIndex : uint8_t
 {
 
+#if AP_DDS_RANGE_PUB_ENABLED
+  RANGE_PUB,
+#endif
+
 #if AP_DDS_JOINT_STATE_PUB_ENABLED
   JOINT_STATE_PUB,
 #endif
@@ -456,6 +460,23 @@ constexpr struct AP_DDS_Client::Topic_table AP_DDS_Client::topics[] =
          .depth = 5,
        }},
 #endif  // AP_DDS_JOINT_STATE_PUB_ENABLED
+
+#if AP_DDS_RANGE_PUB_ENABLED
+    {.topic_id = to_underlying(TopicIndex::RANGE_PUB),
+     .pub_id = to_underlying(TopicIndex::RANGE_PUB),
+     .sub_id = to_underlying(TopicIndex::RANGE_PUB),
+     .dw_id = uxrObjectId{.id = to_underlying(TopicIndex::RANGE_PUB), .type = UXR_DATAWRITER_ID},
+     .dr_id = uxrObjectId{.id = 0, .type = 0},
+     .topic_name = "rt/ap/range",
+     .type_name = "sensor_msgs::msg::dds_::Range_",
+     .qos =
+       {
+         .durability = UXR_DURABILITY_VOLATILE,
+         .reliability = UXR_RELIABILITY_BEST_EFFORT,
+         .history = UXR_HISTORY_KEEP_LAST,
+         .depth = 5,
+       }},
+#endif  // AP_DDS_RANGE_PUB_ENABLED
 
 #if AP_DDS_JOY_SUB_ENABLED
     {

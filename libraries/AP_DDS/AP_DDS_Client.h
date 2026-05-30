@@ -33,6 +33,10 @@
 #include "sam_msgs_package/msg/WheelData.h"
 #endif  // AP_DDS_WHEEL_DATA_PUB_ENABLED
 
+#if AP_DDS_RANGE_PUB_ENABLED
+#include "sensor_msgs/msg/Range.h"
+#endif  // AP_DDS_RANGE_PUB_ENABLED
+
 #if AP_DDS_NAV_ODOM_PUB_ENABLED
 #include "nav_msgs/msg/Odometry.h"  //Pfad von generierten Headern
 #endif
@@ -88,6 +92,7 @@
 #define DDS_STREAM_HISTORY 8
 #define DDS_BUFFER_SIZE DDS_MTU * DDS_STREAM_HISTORY
 #define DELAY_JOINT_STATE_TOPIC_MS 20
+#define DELAY_RANGE_TOPIC_MS 50
 
 #if AP_DDS_UDP_ENABLED
 #include <AP_HAL/utility/Socket.h>
@@ -206,6 +211,13 @@ private:
   static void update_topic(sensor_msgs_msg_Imu & msg);
   void write_imu_topic();
 #endif  // AP_DDS_IMU_PUB_ENABLED
+
+#if AP_DDS_RANGE_PUB_ENABLED
+  static void update_topic(sensor_msgs_msg_Range & msg);
+  sensor_msgs_msg_Range range_topic;
+  uint32_t last_range_time_ms;
+  void write_range_topic();
+#endif
 
 #if AP_DDS_JOINT_STATE_PUB_ENABLED
   static void update_topic(sensor_msgs_msg_JointState & msg);

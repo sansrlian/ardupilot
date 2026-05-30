@@ -46,6 +46,11 @@
 #include <SRV_Channel/SRV_Channel.h>
 #endif
 
+#if AP_RANGEFINDER_ENABLED
+#include <AP_RangeFinder/AP_RangeFinder.h>
+#include <AP_RangeFinder/AP_RangeFinder_Backend.h>
+#endif
+
 #if AP_EXTERNAL_CONTROL_ENABLED
 #include "AP_DDS_ExternalControl.h"
 #endif  // AP_EXTERNAL_CONTROL_ENABLED
@@ -741,6 +746,41 @@ void AP_DDS_Client::update_topic(sam_msgs_package_msg_WheelData & msg)
   msg.direction = (rate > 0) ? 1 : (rate < 0) ? -1 : 0;
 }
 #endif
+
+#if AP_DDS_RANGE_PUB_ENABLED
+void AP_DDS_Client::update_topic(sensor_msgs_msg_Range & msg)
+{
+  const uint32_t now_ms = AP_HAL::millis();
+  msg.header.stamp.sec = now_ms / 1000;
+  msg.header.stamp.nanosec = (now_ms % 1000) * 1000000U;
+  STRCPY(msg.header.frame_id, "rangefinder_link");
+
+  msg.radiation_type = 1;     // 1 = INFRARED (Lidar/ToF), 0 = ULTRASOUND (Sonar)
+  msg.field_of_view = 0.05f;  // ca. 3 Grad Öffnungswinkel
+  msg.min_range = 0.1f;       // Standard Minimum (0.1m)
+  msg.max_range = 10.0f;      // Standard Maximum (10.0m)
+  msg.range = 0.0f;
+
+#if AP_RANGEFINDER_ENABLED
+  const RangeFinder * rangefinder = RangeFinder::get_singleton();
+  if (rangefinder != nullptr && rangefinder->num_sensors() > 0) {
+    // Das Backend der ersten Instanz (Index 0) abfragen
+    const AP_RangeFinder_Backend * backend = rangefinder->get_backend(0);
+    if (backend != nullptr) {
+      msg.min_range = backend->min_distance();
+      msg.max_range = backend->max_distance();
+
+      if (backend->status() == RangeFinder::Status::Good) {
+        msg.range = backend->distance();
+      } else {
+        // ROS-Konvention: Wenn kein gültiger Messwert vorliegt, soll range > max_range sein
+        msg.range = msg.max_range + 1.0f;
+      }
+    }
+  }
+#endif
+}
+#endif  // AP_DDS_RANGE_PUB_ENABLED
 
 #if AP_DDS_NAV_ODOM_PUB_ENABLED
 void AP_DDS_Client::update_topic(nav_msgs_msg_Odometry & msg)
@@ -2001,6 +2041,26 @@ void AP_DDS_Client::write_wheel_data_topic()
 }
 #endif
 
+#if AP_DDS_RANGE_PUB_ENABLED
+void AP_DDS_Client::write_range_topic()
+{
+  WITH_SEMAPHORE(csem);
+  if (connected) {
+    ucdrBuffer ub{};
+    const uint32_t topic_size = sensor_msgs_msg_Range_size_of_topic(&range_topic, 0);
+
+    uxr_prepare_output_stream(
+      &session, reliable_out, topics[to_underlying(TopicIndex::RANGE_PUB)].dw_id, &ub, topic_size);
+
+    const bool success = sensor_msgs_msg_Range_serialize_topic(&ub, &range_topic);
+
+    if (!success) {
+      GCS_SEND_TEXT(MAV_SEVERITY_ERROR, "DDS: range serialize failed");
+    }
+  }
+}
+#endif  // AP_DDS_RANGE_PUB_ENABLED
+
 #if AP_DDS_NAV_ODOM_PUB_ENABLED
 void AP_DDS_Client::write_nav_odom_topic()
 {
@@ -2221,6 +2281,14 @@ void AP_DDS_Client::update()
     write_wheel_data_topic();
   }
 #endif  // AP_DDS_WHEEL_DATA_PUB_ENABLED
+
+#if AP_DDS_RANGE_PUB_ENABLED
+  if (cur_time_ms - last_range_time_ms > DELAY_RANGE_TOPIC_MS) {
+    update_topic(range_topic);
+    last_range_time_ms = cur_time_ms;
+    write_range_topic();
+  }
+#endif
 
 #if AP_DDS_NAV_ODOM_PUB_ENABLED
 
