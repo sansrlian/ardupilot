@@ -222,7 +222,7 @@ private:
 #if AP_DDS_JOINT_STATE_PUB_ENABLED
   static void update_topic(sensor_msgs_msg_JointState & msg);
   sensor_msgs_msg_JointState joint_state_topic;
-  uint32_t last_joint_state_time_ms;
+  uint32_t last_joint_state_time_ms = 0;
   void write_joint_state_topic();
 #endif
 

@@ -30,9 +30,6 @@ enum class TopicIndex : uint8_t
   RANGE_PUB,
 #endif
 
-#if AP_DDS_JOINT_STATE_PUB_ENABLED
-  JOINT_STATE_PUB,
-#endif
 #if AP_DDS_TIME_PUB_ENABLED
   TIME_PUB,
 #endif  // AP_DDS_TIME_PUB_ENABLED
@@ -83,6 +80,10 @@ enum class TopicIndex : uint8_t
 #if AP_DDS_NAV_ODOM_PUB_ENABLED
   NAV_ODOM_PUB,
 #endif  // AP_DDS_NAV_ODOM_PUB_ENABLED
+
+#if AP_DDS_JOINT_STATE_PUB_ENABLED
+  JOINT_STATE_PUB,
+#endif
 
 #if AP_DDS_JOY_SUB_ENABLED
   JOY_SUB,
