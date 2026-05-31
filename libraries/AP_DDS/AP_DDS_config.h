@@ -26,13 +26,41 @@
 #define AP_DDS_EXPERIMENTAL_ENABLED 1
 #endif
 
+// =========================================================================
+// AKTIVIERTE TOPICS (Live-Sensordaten & Steuerung)
+// =========================================================================
+
 #ifndef AP_DDS_IMU_PUB_ENABLED
-#define AP_DDS_IMU_PUB_ENABLED AP_DDS_EXPERIMENTAL_ENABLED
+#define AP_DDS_IMU_PUB_ENABLED 1
 #endif
 
 #ifndef AP_DDS_DELAY_IMU_TOPIC_MS
-#define AP_DDS_DELAY_IMU_TOPIC_MS 5
+#define AP_DDS_DELAY_IMU_TOPIC_MS 5  // entspricht 200 Hz
 #endif
+
+#ifndef AP_DDS_WHEEL_DATA_PUB_ENABLED
+#define AP_DDS_WHEEL_DATA_PUB_ENABLED 1
+#endif
+
+#ifndef AP_DDS_DELAY_WHEEL_DATA_TOPIC_MS
+#define AP_DDS_DELAY_WHEEL_DATA_TOPIC_MS 5  // entspricht 200 Hz
+#endif
+
+#ifndef AP_DDS_NAV_ODOM_PUB_ENABLED
+#define AP_DDS_NAV_ODOM_PUB_ENABLED 1
+#endif
+
+#ifndef AP_DDS_JOINT_STATE_PUB_ENABLED
+#define AP_DDS_JOINT_STATE_PUB_ENABLED 1
+#endif
+
+#ifndef AP_DDS_RANGE_PUB_ENABLED
+#define AP_DDS_RANGE_PUB_ENABLED 1
+#endif
+
+// =========================================================================
+// ESSENZIELLE HILFSTOPICS (Für ROS 2 Zeit- und Taktsynchronisierung)
+// =========================================================================
 
 #ifndef AP_DDS_TIME_PUB_ENABLED
 #define AP_DDS_TIME_PUB_ENABLED 1
@@ -42,16 +70,28 @@
 #define AP_DDS_DELAY_TIME_TOPIC_MS 10
 #endif
 
+#ifndef AP_DDS_CLOCK_PUB_ENABLED
+#define AP_DDS_CLOCK_PUB_ENABLED 1
+#endif
+
+#ifndef AP_DDS_DELAY_CLOCK_TOPIC_MS
+#define AP_DDS_DELAY_CLOCK_TOPIC_MS 10
+#endif
+
+// =========================================================================
+// DEAKTIVIERTE TOPICS
+// =========================================================================
+
 #ifndef AP_DDS_NAVSATFIX_PUB_ENABLED
-#define AP_DDS_NAVSATFIX_PUB_ENABLED AP_GPS_ENABLED
+#define AP_DDS_NAVSATFIX_PUB_ENABLED 0
 #endif
 
 #ifndef AP_DDS_STATIC_TF_PUB_ENABLED
-#define AP_DDS_STATIC_TF_PUB_ENABLED AP_GPS_ENABLED
+#define AP_DDS_STATIC_TF_PUB_ENABLED 0
 #endif
 
 #ifndef AP_DDS_GPS_GLOBAL_ORIGIN_PUB_ENABLED
-#define AP_DDS_GPS_GLOBAL_ORIGIN_PUB_ENABLED 1
+#define AP_DDS_GPS_GLOBAL_ORIGIN_PUB_ENABLED 0
 #endif
 
 #ifndef AP_DDS_DELAY_GPS_GLOBAL_ORIGIN_TOPIC_MS
@@ -67,7 +107,7 @@
 #endif
 
 #ifndef AP_DDS_LOCAL_POSE_PUB_ENABLED
-#define AP_DDS_LOCAL_POSE_PUB_ENABLED 1
+#define AP_DDS_LOCAL_POSE_PUB_ENABLED 0
 #endif
 
 #ifndef AP_DDS_DELAY_LOCAL_POSE_TOPIC_MS
@@ -75,7 +115,7 @@
 #endif
 
 #ifndef AP_DDS_LOCAL_VEL_PUB_ENABLED
-#define AP_DDS_LOCAL_VEL_PUB_ENABLED 1
+#define AP_DDS_LOCAL_VEL_PUB_ENABLED 0
 #endif
 
 #ifndef AP_DDS_DELAY_LOCAL_VELOCITY_TOPIC_MS
@@ -83,7 +123,7 @@
 #endif
 
 #ifndef AP_DDS_AIRSPEED_PUB_ENABLED
-#define AP_DDS_AIRSPEED_PUB_ENABLED 1
+#define AP_DDS_AIRSPEED_PUB_ENABLED 0
 #endif
 
 #ifndef AP_DDS_DELAY_AIRSPEED_TOPIC_MS
@@ -91,7 +131,7 @@
 #endif
 
 #ifndef AP_DDS_RC_PUB_ENABLED
-#define AP_DDS_RC_PUB_ENABLED (AP_RSSI_ENABLED && AP_RC_CHANNEL_ENABLED)
+#define AP_DDS_RC_PUB_ENABLED 0
 #endif
 
 #ifndef AP_DDS_DELAY_RC_TOPIC_MS
@@ -110,51 +150,48 @@
 #define AP_DDS_DELAY_STATUS_TOPIC_MS 100
 #endif
 
-#ifndef AP_DDS_CLOCK_PUB_ENABLED
-#define AP_DDS_CLOCK_PUB_ENABLED 1
-#endif
-
-#ifndef AP_DDS_DELAY_CLOCK_TOPIC_MS
-#define AP_DDS_DELAY_CLOCK_TOPIC_MS 10
-#endif
-
 #ifndef AP_DDS_GOAL_PUB_ENABLED
-#define AP_DDS_GOAL_PUB_ENABLED 1
+#define AP_DDS_GOAL_PUB_ENABLED 0
 #endif
 
 #ifndef AP_DDS_DELAY_GOAL_TOPIC_MS
 #define AP_DDS_DELAY_GOAL_TOPIC_MS 200
 #endif
+
 #ifndef AP_DDS_STATUS_PUB_ENABLED
-#define AP_DDS_STATUS_PUB_ENABLED 1
+#define AP_DDS_STATUS_PUB_ENABLED 0
 #endif
 
 #ifndef AP_DDS_JOY_SUB_ENABLED
-#define AP_DDS_JOY_SUB_ENABLED 1
+#define AP_DDS_JOY_SUB_ENABLED 0
 #endif
 
 #ifndef AP_DDS_VEL_CTRL_ENABLED
-#define AP_DDS_VEL_CTRL_ENABLED 1
+#define AP_DDS_VEL_CTRL_ENABLED 0
 #endif
 
 #ifndef AP_DDS_GLOBAL_POS_CTRL_ENABLED
-#define AP_DDS_GLOBAL_POS_CTRL_ENABLED 1
+#define AP_DDS_GLOBAL_POS_CTRL_ENABLED 0
 #endif
 
 #ifndef AP_DDS_DYNAMIC_TF_SUB_ENABLED
-#define AP_DDS_DYNAMIC_TF_SUB_ENABLED 1
+#define AP_DDS_DYNAMIC_TF_SUB_ENABLED 0
 #endif
+
+// =========================================================================
+//  DIENSTE / SERVICE SERVERS
+// =========================================================================
 
 #ifndef AP_DDS_ARM_SERVER_ENABLED
 #define AP_DDS_ARM_SERVER_ENABLED 1
 #endif
 
 #ifndef AP_DDS_MODE_SWITCH_SERVER_ENABLED
-#define AP_DDS_MODE_SWITCH_SERVER_ENABLED 1
+#define AP_DDS_MODE_SWITCH_SERVER_ENABLED 0
 #endif
 
 #ifndef AP_DDS_VTOL_TAKEOFF_SERVER_ENABLED
-#define AP_DDS_VTOL_TAKEOFF_SERVER_ENABLED 1
+#define AP_DDS_VTOL_TAKEOFF_SERVER_ENABLED 0
 #endif
 
 #ifndef AP_DDS_PARAMETER_SERVER_ENABLED
@@ -164,6 +201,10 @@
 #ifndef AP_DDS_ARM_CHECK_SERVER_ENABLED
 #define AP_DDS_ARM_CHECK_SERVER_ENABLED 1
 #endif
+
+// =========================================================================
+// SYSTEMABHÄNGIGE DERIVIERTE MAKROS
+// =========================================================================
 
 // Whether to include Twist support
 #define AP_DDS_NEEDS_TWIST AP_DDS_VEL_CTRL_ENABLED || AP_DDS_LOCAL_VEL_PUB_ENABLED
@@ -184,25 +225,4 @@
 
 #ifndef AP_DDS_PARTICIPANT_NAME
 #define AP_DDS_PARTICIPANT_NAME "ap"
-#endif
-
-// WheelData Publisher
-#ifndef AP_DDS_WHEEL_DATA_PUB_ENABLED
-#define AP_DDS_WHEEL_DATA_PUB_ENABLED AP_DDS_ENABLED
-#endif
-
-#ifndef AP_DDS_DELAY_WHEEL_DATA_TOPIC_MS
-#define AP_DDS_DELAY_WHEEL_DATA_TOPIC_MS 5
-#endif
-
-#ifndef AP_DDS_NAV_ODOM_PUB_ENABLED
-#define AP_DDS_NAV_ODOM_PUB_ENABLED 1
-#endif
-
-#ifndef AP_DDS_JOINT_STATE_PUB_ENABLED
-#define AP_DDS_JOINT_STATE_PUB_ENABLED 1
-#endif
-
-#ifndef AP_DDS_RANGE_PUB_ENABLED
-#define AP_DDS_RANGE_PUB_ENABLED 1
 #endif

@@ -1670,7 +1670,11 @@ bool AP_DDS_Client::init_session()
   // setup reliable stream buffers
   input_reliable_stream = NEW_NOTHROW uint8_t[DDS_BUFFER_SIZE];
   output_reliable_stream = NEW_NOTHROW uint8_t[DDS_BUFFER_SIZE];
-  if (input_reliable_stream == nullptr || output_reliable_stream == nullptr) {
+  output_best_effort_stream = NEW_NOTHROW uint8_t[DDS_BUFFER_SIZE];
+
+  if (
+    input_reliable_stream == nullptr || output_reliable_stream == nullptr ||
+    output_best_effort_stream == nullptr) {
     GCS_SEND_TEXT(MAV_SEVERITY_ERROR, "%s Allocation failed", msg_prefix);
     return false;
   }
@@ -1679,6 +1683,10 @@ bool AP_DDS_Client::init_session()
     &session, input_reliable_stream, DDS_BUFFER_SIZE, DDS_STREAM_HISTORY);
   reliable_out = uxr_create_output_reliable_stream(
     &session, output_reliable_stream, DDS_BUFFER_SIZE, DDS_STREAM_HISTORY);
+
+  // setup best_effort stream mit Puffer und Größe (DDS_BUFFER_SIZE)
+  best_effort_out =
+    uxr_create_output_best_effort_stream(&session, output_best_effort_stream, DDS_BUFFER_SIZE);
 
   GCS_SEND_TEXT(MAV_SEVERITY_INFO, "%s Init complete", msg_prefix);
 

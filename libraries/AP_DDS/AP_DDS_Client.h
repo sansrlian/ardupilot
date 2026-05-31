@@ -113,8 +113,12 @@ private:
   // input and output stream
   uint8_t * input_reliable_stream;
   uint8_t * output_reliable_stream;
+  uint8_t * output_best_effort_stream = nullptr;
+
   uxrStreamId reliable_in;
   uxrStreamId reliable_out;
+
+  uxrStreamId best_effort_out;
 
   // Outgoing Sensor and AHRS data
 
