@@ -30,6 +30,26 @@
 // AKTIVIERTE TOPICS (Live-Sensordaten & Steuerung)
 // =========================================================================
 
+#ifndef AP_DDS_SPEED_SUB_ENABLED
+#define AP_DDS_SPEED_SUB_ENABLED 1
+#endif
+
+#ifndef AP_DDS_DELAY_SPEED_TIMEOUT_MS
+#define AP_DDS_DELAY_SPEED_TIMEOUT_MS 2000  // Notbremse nach 2s
+#endif
+
+#ifndef AP_DDS_DELAY_NAV_ODOM_TOPIC_MS
+#define AP_DDS_DELAY_NAV_ODOM_TOPIC_MS 50  // 20 Hz für Odometrie
+#endif
+
+#ifndef AP_DDS_DELAY_JOINT_STATE_TOPIC_MS
+#define AP_DDS_DELAY_JOINT_STATE_TOPIC_MS 20  // 50 Hz für JointState
+#endif
+
+#ifndef AP_DDS_DELAY_RANGE_TOPIC_MS
+#define AP_DDS_DELAY_RANGE_TOPIC_MS 50  // 20 Hz für Rangefinder
+#endif
+
 #ifndef AP_DDS_IMU_PUB_ENABLED
 #define AP_DDS_IMU_PUB_ENABLED 1
 #endif
@@ -43,7 +63,7 @@
 #endif
 
 #ifndef AP_DDS_DELAY_WHEEL_DATA_TOPIC_MS
-#define AP_DDS_DELAY_WHEEL_DATA_TOPIC_MS 5  // entspricht 200 Hz
+#define AP_DDS_DELAY_WHEEL_DATA_TOPIC_MS 20  // entspricht 50 Hz
 #endif
 
 #ifndef AP_DDS_NAV_ODOM_PUB_ENABLED
@@ -99,7 +119,7 @@
 #endif
 
 #ifndef AP_DDS_GEOPOSE_PUB_ENABLED
-#define AP_DDS_GEOPOSE_PUB_ENABLED 1
+#define AP_DDS_GEOPOSE_PUB_ENABLED 0
 #endif
 
 #ifndef AP_DDS_DELAY_GEO_POSE_TOPIC_MS
@@ -187,7 +207,7 @@
 #endif
 
 #ifndef AP_DDS_MODE_SWITCH_SERVER_ENABLED
-#define AP_DDS_MODE_SWITCH_SERVER_ENABLED 0
+#define AP_DDS_MODE_SWITCH_SERVER_ENABLED 1
 #endif
 
 #ifndef AP_DDS_VTOL_TAKEOFF_SERVER_ENABLED

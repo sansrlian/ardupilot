@@ -26,6 +26,10 @@
 enum class TopicIndex : uint8_t
 {
 
+#if AP_DDS_SPEED_SUB_ENABLED
+  SPEED_SUB,
+#endif
+
 #if AP_DDS_RANGE_PUB_ENABLED
   RANGE_PUB,
 #endif
@@ -107,6 +111,26 @@ static inline constexpr uint8_t to_underlying(const TopicIndex index)
 
 constexpr struct AP_DDS_Client::Topic_table AP_DDS_Client::topics[] =
   {
+
+#if AP_DDS_SPEED_SUB_ENABLED
+    {.topic_id = to_underlying(TopicIndex::SPEED_SUB),
+     .pub_id = to_underlying(TopicIndex::SPEED_SUB),
+     .sub_id = to_underlying(TopicIndex::SPEED_SUB),
+     .dw_id = uxrObjectId{.id = 0, .type = 0},  // Subscriber, also kein write
+     .dr_id =
+       uxrObjectId{
+         .id = to_underlying(TopicIndex::SPEED_SUB), .type = UXR_DATAREADER_ID},  // Ein Reader!
+     .topic_name = "rt/ap/speed",
+     .type_name = "std_msgs::msg::dds_::Float32_",
+     .qos =
+       {
+         .durability = UXR_DURABILITY_VOLATILE,
+         .reliability = UXR_RELIABILITY_BEST_EFFORT,
+         .history = UXR_HISTORY_KEEP_LAST,
+         .depth = 5,
+       }},
+#endif
+
 #if AP_DDS_TIME_PUB_ENABLED
     {
       .topic_id = to_underlying(TopicIndex::TIME_PUB),

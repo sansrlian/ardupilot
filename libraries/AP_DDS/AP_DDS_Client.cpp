@@ -63,6 +63,23 @@
 #define STRCPY(D, S) strncpy(D, S, ARRAY_SIZE(D))
 
 // Enable DDS at runtime by default
+
+#if AP_DDS_SPEED_SUB_ENABLED
+std_msgs_msg_Float32 AP_DDS_Client::rx_speed_topic{};
+#endif
+
+#if AP_DDS_NAV_ODOM_PUB_ENABLED
+static constexpr uint16_t DELAY_NAV_ODOM_TOPIC_MS = AP_DDS_DELAY_NAV_ODOM_TOPIC_MS;
+#endif
+
+#if AP_DDS_JOINT_STATE_PUB_ENABLED
+static constexpr uint16_t DELAY_JOINT_STATE_TOPIC_MS = AP_DDS_DELAY_JOINT_STATE_TOPIC_MS;
+#endif
+
+#if AP_DDS_RANGE_PUB_ENABLED
+static constexpr uint16_t DELAY_RANGE_TOPIC_MS = AP_DDS_DELAY_RANGE_TOPIC_MS;
+#endif
+
 static constexpr uint8_t ENABLED_BY_DEFAULT = 1;
 #if AP_DDS_TIME_PUB_ENABLED
 static constexpr uint16_t DELAY_TIME_TOPIC_MS = AP_DDS_DELAY_TIME_TOPIC_MS;
@@ -1063,6 +1080,7 @@ void AP_DDS_Client::on_topic(
   (void)request_id;
   (void)stream_id;
   (void)length;
+
   switch (object_id.id) {
 #if AP_DDS_JOY_SUB_ENABLED
     case topics[to_underlying(TopicIndex::JOY_SUB)].dr_id.id: {
@@ -1091,6 +1109,7 @@ void AP_DDS_Client::on_topic(
       break;
     }
 #endif  // AP_DDS_JOY_SUB_ENABLED
+
 #if AP_DDS_DYNAMIC_TF_SUB_ENABLED
     case topics[to_underlying(TopicIndex::DYNAMIC_TRANSFORMS_SUB)].dr_id.id: {
       const bool success =
@@ -1110,6 +1129,7 @@ void AP_DDS_Client::on_topic(
       break;
     }
 #endif  // AP_DDS_DYNAMIC_TF_SUB_ENABLED
+
 #if AP_DDS_VEL_CTRL_ENABLED
     case topics[to_underlying(TopicIndex::VELOCITY_CONTROL_SUB)].dr_id.id: {
       const bool success =
@@ -1125,6 +1145,7 @@ void AP_DDS_Client::on_topic(
       break;
     }
 #endif  // AP_DDS_VEL_CTRL_ENABLED
+
 #if AP_DDS_GLOBAL_POS_CTRL_ENABLED
     case topics[to_underlying(TopicIndex::GLOBAL_POSITION_SUB)].dr_id.id: {
       const bool success =
@@ -1142,6 +1163,17 @@ void AP_DDS_Client::on_topic(
       break;
     }
 #endif  // AP_DDS_GLOBAL_POS_CTRL_ENABLED
+
+#if AP_DDS_SPEED_SUB_ENABLED
+    case topics[to_underlying(TopicIndex::SPEED_SUB)].dr_id.id: {
+      const bool success = std_msgs_msg_Float32_deserialize_topic(ub, &rx_speed_topic);
+      if (success == false) {
+        break;
+      }
+      handle_speed_topic();
+      break;
+    }
+#endif  // AP_DDS_SPEED_SUB_ENABLED
   }
 }
 
@@ -2013,15 +2045,29 @@ void AP_DDS_Client::write_tx_local_rc_topic()
   }
 }
 #endif  // AP_DDS_RC_PUB_ENABLED
+
 #if AP_DDS_IMU_PUB_ENABLED
 void AP_DDS_Client::write_imu_topic()
 {
+  // Sendefrequenz
+  static uint32_t imu_msg_counter = 0;
+  static uint32_t imu_fps_timer_ms = 0;
+  const uint32_t now_ms = AP_HAL::millis();
+
+  imu_msg_counter++;
+
+  if (now_ms - imu_fps_timer_ms >= 1000) {
+    GCS_SEND_TEXT(MAV_SEVERITY_INFO, "IMU-Sendeversuche auf FC: %u Hz", (unsigned)imu_msg_counter);
+    imu_msg_counter = 0;
+    imu_fps_timer_ms = now_ms;
+  }
+
   WITH_SEMAPHORE(csem);
   if (connected) {
     ucdrBuffer ub{};
     const uint32_t topic_size = sensor_msgs_msg_Imu_size_of_topic(&imu_topic, 0);
     uxr_prepare_output_stream(
-      &session, reliable_out, topics[to_underlying(TopicIndex::IMU_PUB)].dw_id, &ub, topic_size);
+      &session, best_effort_out, topics[to_underlying(TopicIndex::IMU_PUB)].dw_id, &ub, topic_size);
     const bool success = sensor_msgs_msg_Imu_serialize_topic(&ub, &imu_topic);
     if (!success) {
       // TODO sometimes serialization fails on bootup. Determine why.
@@ -2281,6 +2327,7 @@ void AP_DDS_Client::update()
     last_geo_pose_time_ms = cur_time_ms;
     write_geo_pose_topic();
   }
+#endif  // AP_DDS_GEOPOSE_PUB_ENABLED
 
 #if AP_DDS_WHEEL_DATA_PUB_ENABLED
   if (cur_time_ms - last_wheel_data_time_ms > DELAY_WHEEL_DATA_TOPIC_MS) {
@@ -2296,16 +2343,15 @@ void AP_DDS_Client::update()
     last_range_time_ms = cur_time_ms;
     write_range_topic();
   }
-#endif
+#endif  // AP_DDS_RANGE_PUB_ENABLED
 
 #if AP_DDS_NAV_ODOM_PUB_ENABLED
-
   if (cur_time_ms - last_nav_odom_time_ms > DELAY_NAV_ODOM_TOPIC_MS) {
     update_topic(odom_topic);
     last_nav_odom_time_ms = cur_time_ms;
     write_nav_odom_topic();
   }
-#endif
+#endif  // AP_DDS_NAV_ODOM_PUB_ENABLED
 
 #if AP_DDS_JOINT_STATE_PUB_ENABLED
   if (cur_time_ms - last_joint_state_time_ms > DELAY_JOINT_STATE_TOPIC_MS) {
@@ -2313,9 +2359,8 @@ void AP_DDS_Client::update()
     last_joint_state_time_ms = cur_time_ms;
     write_joint_state_topic();
   }
-#endif
+#endif  // AP_DDS_JOINT_STATE_PUB_ENABLED
 
-#endif  // AP_DDS_GEOPOSE_PUB_ENABLED
 #if AP_DDS_CLOCK_PUB_ENABLED
   if (cur_time_ms - last_clock_time_ms > DELAY_CLOCK_TOPIC_MS) {
     update_topic(clock_topic);
@@ -2347,6 +2392,19 @@ void AP_DDS_Client::update()
   }
 #endif  // AP_DDS_STATUS_PUB_ENABLED
 
+  // =========================================================================
+  // ROS-2 SENSOR LOSS WATCHDOG / DEADLINE (Notbremse)
+  // =========================================================================
+#if AP_DDS_SPEED_SUB_ENABLED
+  // Greift nur, wenn armed und wir bereits mindestens ein Signal empfangen haben
+  if (hal.util->get_soft_armed() && last_speed_rx_time_ms != 0) {
+    if (cur_time_ms - last_speed_rx_time_ms > SPEED_TIMEOUT_MS) {
+      GCS_SEND_TEXT(MAV_SEVERITY_EMERGENCY, "DDS: Speed Watchdog Timeout! NOTBREMSE!");
+      AP::arming().disarm(AP_Arming::Method::TERMINATION);
+    }
+  }
+#endif  // AP_DDS_SPEED_SUB_ENABLED
+
   status_ok = uxr_run_session_time(&session, 1);
 }
 
@@ -2370,3 +2428,10 @@ int clock_gettime(clockid_t clockid, struct timespec * ts)
 #endif  // CONFIG_HAL_BOARD == HAL_BOARD_CHIBIOS
 
 #endif  // AP_DDS_ENABLED
+
+#if AP_DDS_SPEED_SUB_ENABLED
+void AP_DDS_Client::handle_speed_topic()
+{
+  last_speed_rx_time_ms = AP_HAL::millis64();
+}
+#endif

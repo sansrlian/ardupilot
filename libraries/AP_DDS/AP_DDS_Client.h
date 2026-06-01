@@ -25,6 +25,10 @@
 #include "sensor_msgs/msg/BatteryState.h"
 #endif  // AP_DDS_BATTERY_STATE_PUB_ENABLED
 
+#if AP_DDS_SPEED_SUB_ENABLED
+#include "std_msgs/msg/Float32.h"
+#endif
+
 #if AP_DDS_IMU_PUB_ENABLED
 #include "sensor_msgs/msg/Imu.h"
 #endif  // AP_DDS_IMU_PUB_ENABLED
@@ -91,8 +95,8 @@
 #define DDS_MTU 512
 #define DDS_STREAM_HISTORY 8
 #define DDS_BUFFER_SIZE DDS_MTU * DDS_STREAM_HISTORY
-#define DELAY_JOINT_STATE_TOPIC_MS 20
-#define DELAY_RANGE_TOPIC_MS 50
+// #define DELAY_JOINT_STATE_TOPIC_MS 20
+// #define DELAY_RANGE_TOPIC_MS 50
 
 #if AP_DDS_UDP_ENABLED
 #include <AP_HAL/utility/Socket.h>
@@ -119,6 +123,14 @@ private:
   uxrStreamId reliable_out;
 
   uxrStreamId best_effort_out;
+
+  // incoming data
+#if AP_DDS_SPEED_SUB_ENABLED
+  static std_msgs_msg_Float32 rx_speed_topic;
+  uint64_t last_speed_rx_time_ms = 0;
+  static constexpr uint32_t SPEED_TIMEOUT_MS = AP_DDS_DELAY_SPEED_TIMEOUT_MS;
+  void handle_speed_topic();
+#endif
 
   // Outgoing Sensor and AHRS data
 
