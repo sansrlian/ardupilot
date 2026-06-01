@@ -2093,8 +2093,6 @@ void AP_DDS_Client::write_nav_odom_topic()
 #if AP_DDS_JOINT_STATE_PUB_ENABLED
 void AP_DDS_Client::write_joint_state_topic()
 {
-  GCS_SEND_TEXT(MAV_SEVERITY_INFO, "DDS: Sende JointState!");
-
   WITH_SEMAPHORE(csem);
   if (connected) {
     ucdrBuffer ub{};
@@ -2301,17 +2299,6 @@ void AP_DDS_Client::update()
 #endif
 
 #if AP_DDS_NAV_ODOM_PUB_ENABLED
-
-  // Debug:
-
-  // Temporäre Diagnose-Ausgabe alle 2 Sekunden
-  static uint32_t debug_print_timer_ms = 0;
-  if (cur_time_ms - debug_print_timer_ms > 2000) {
-    GCS_SEND_TEXT(
-      MAV_SEVERITY_INFO, "Odom: cur=%u, last=%u, diff=%u", (unsigned)cur_time_ms,
-      (unsigned)last_nav_odom_time_ms, (unsigned)(cur_time_ms - last_nav_odom_time_ms));
-    debug_print_timer_ms = cur_time_ms;
-  }
 
   if (cur_time_ms - last_nav_odom_time_ms > DELAY_NAV_ODOM_TOPIC_MS) {
     update_topic(odom_topic);
