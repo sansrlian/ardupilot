@@ -1626,7 +1626,7 @@ void AP_DDS_Client::main_loop(void)
         had_ping_reply = true;
       }
 
-      const auto cur_time_ms = AP_HAL::millis64();
+      const uint32_t cur_time_ms = AP_HAL::millis64();
       if (cur_time_ms - last_ping_ms > DELAY_PING_MS) {
         last_ping_ms = cur_time_ms;
 

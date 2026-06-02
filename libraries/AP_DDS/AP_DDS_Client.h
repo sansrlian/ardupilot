@@ -127,7 +127,7 @@ private:
   // incoming data
 #if AP_DDS_SPEED_SUB_ENABLED
   static std_msgs_msg_Float32 rx_speed_topic;
-  uint64_t last_speed_rx_time_ms = 0;
+  uint32_t last_speed_rx_time_ms = 0;
   static constexpr uint32_t SPEED_TIMEOUT_MS = AP_DDS_DELAY_SPEED_TIMEOUT_MS;
   void handle_speed_topic();
 #endif
@@ -137,7 +137,7 @@ private:
 #if AP_DDS_TIME_PUB_ENABLED
   builtin_interfaces_msg_Time time_topic;
   // The last ms timestamp AP_DDS wrote a Time message
-  uint64_t last_time_time_ms;
+  uint32_t last_time_time_ms;
   //! @brief Serialize the current time state and publish to the IO stream(s)
   void write_time_topic();
   static void update_topic(builtin_interfaces_msg_Time & msg);
@@ -209,7 +209,7 @@ private:
 
 #if AP_DDS_BATTERY_STATE_PUB_ENABLED
   sensor_msgs_msg_BatteryState battery_state_topic;
-  uint64_t last_battery_state_time_ms{0};
+  uint32_t last_battery_state_time_ms{0};
   void write_battery_state_topic();
   static void update_topic(sensor_msgs_msg_BatteryState & msg, const uint8_t instance);
 #endif  // AP_DDS_BATTERY_STATE_PUB_ENABLED
@@ -244,7 +244,7 @@ private:
 
 #if AP_DDS_WHEEL_DATA_PUB_ENABLED
   sam_msgs_package_msg_WheelData wheel_data_topic;
-  uint64_t last_wheel_data_time_ms{0};
+  uint32_t last_wheel_data_time_ms{0};
   void update_topic(sam_msgs_package_msg_WheelData & msg);
   void write_wheel_data_topic();
 #endif  // AP_DDS_WHEEL_DATA_PUB_ENABLED
