@@ -223,7 +223,7 @@ private:
 
 #if AP_DDS_IMU_PUB_ENABLED
   sensor_msgs_msg_Imu imu_topic;
-  uint64_t last_imu_time_ms{0};
+  uint64_t last_imu_time_us{0};
   static void update_topic(sensor_msgs_msg_Imu & msg);
   void write_imu_topic();
 #endif  // AP_DDS_IMU_PUB_ENABLED

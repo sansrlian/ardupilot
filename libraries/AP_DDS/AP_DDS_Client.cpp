@@ -88,7 +88,7 @@ static constexpr uint16_t DELAY_TIME_TOPIC_MS = AP_DDS_DELAY_TIME_TOPIC_MS;
 static constexpr uint16_t DELAY_BATTERY_STATE_TOPIC_MS = AP_DDS_DELAY_BATTERY_STATE_TOPIC_MS;
 #endif  // AP_DDS_BATTERY_STATE_PUB_ENABLED
 #if AP_DDS_IMU_PUB_ENABLED
-static constexpr uint16_t DELAY_IMU_TOPIC_MS = AP_DDS_DELAY_IMU_TOPIC_MS;
+static constexpr uint32_t DELAY_IMU_TOPIC_US = AP_DDS_DELAY_IMU_TOPIC_US;
 #endif  // AP_DDS_IMU_PUB_ENABLED
 
 #if AP_DDS_WHEEL_DATA_PUB_ENABLED
@@ -1616,9 +1616,7 @@ void AP_DDS_Client::main_loop(void)
     uint8_t num_pings_missed{0};
     bool had_ping_reply{false};
     while (connected) {
-      hal.scheduler->delay(1);
-
-      // publish topics
+      // publish topics (no delay here; uxr_run_session_time yields in update())
       update();
 
       // check ping response
@@ -2085,7 +2083,7 @@ void AP_DDS_Client::write_wheel_data_topic()
     ucdrBuffer ub{};
     const uint32_t topic_size = sam_msgs_package_msg_WheelData_size_of_topic(&wheel_data_topic, 0);
     uxr_prepare_output_stream(
-      &session, reliable_out, topics[to_underlying(TopicIndex::WHEEL_DATA_PUB)].dw_id, &ub,
+      &session, best_effort_out, topics[to_underlying(TopicIndex::WHEEL_DATA_PUB)].dw_id, &ub,
       topic_size);
     const bool success = sam_msgs_package_msg_WheelData_serialize_topic(&ub, &wheel_data_topic);
     if (!success) {
@@ -2104,7 +2102,8 @@ void AP_DDS_Client::write_range_topic()
     const uint32_t topic_size = sensor_msgs_msg_Range_size_of_topic(&range_topic, 0);
 
     uxr_prepare_output_stream(
-      &session, reliable_out, topics[to_underlying(TopicIndex::RANGE_PUB)].dw_id, &ub, topic_size);
+      &session, best_effort_out, topics[to_underlying(TopicIndex::RANGE_PUB)].dw_id, &ub,
+      topic_size);
 
     const bool success = sensor_msgs_msg_Range_serialize_topic(&ub, &range_topic);
 
@@ -2147,7 +2146,7 @@ void AP_DDS_Client::write_joint_state_topic()
 
     // 2. XRCE-DDS Ausgabepuffer vorbereiten
     uxr_prepare_output_stream(
-      &session, reliable_out, topics[to_underlying(TopicIndex::JOINT_STATE_PUB)].dw_id, &ub,
+      &session, best_effort_out, topics[to_underlying(TopicIndex::JOINT_STATE_PUB)].dw_id, &ub,
       topic_size);
 
     // 3. Daten in den Puffer serialisieren
@@ -2258,6 +2257,15 @@ void AP_DDS_Client::update()
   WITH_SEMAPHORE(csem);
   const auto cur_time_ms = AP_HAL::millis64();
 
+#if AP_DDS_IMU_PUB_ENABLED
+  const auto cur_time_us = AP_HAL::micros64();
+  if (cur_time_us - last_imu_time_us >= DELAY_IMU_TOPIC_US) {
+    update_topic(imu_topic);
+    last_imu_time_us = cur_time_us;
+    write_imu_topic();
+  }
+#endif  // AP_DDS_IMU_PUB_ENABLED
+
 #if AP_DDS_TIME_PUB_ENABLED
   if (cur_time_ms - last_time_time_ms > DELAY_TIME_TOPIC_MS) {
     update_topic(time_topic);
@@ -2314,13 +2322,6 @@ void AP_DDS_Client::update()
     }
   }
 #endif  // AP_DDS_RC_PUB_ENABLED
-#if AP_DDS_IMU_PUB_ENABLED
-  if (cur_time_ms - last_imu_time_ms > DELAY_IMU_TOPIC_MS) {
-    update_topic(imu_topic);
-    last_imu_time_ms = cur_time_ms;
-    write_imu_topic();
-  }
-#endif  // AP_DDS_IMU_PUB_ENABLED
 #if AP_DDS_GEOPOSE_PUB_ENABLED
   if (cur_time_ms - last_geo_pose_time_ms > DELAY_GEO_POSE_TOPIC_MS) {
     update_topic(geo_pose_topic);

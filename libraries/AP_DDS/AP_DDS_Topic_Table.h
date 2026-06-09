@@ -117,9 +117,8 @@ constexpr struct AP_DDS_Client::Topic_table AP_DDS_Client::topics[] =
      .pub_id = to_underlying(TopicIndex::SPEED_SUB),
      .sub_id = to_underlying(TopicIndex::SPEED_SUB),
      .dw_id = uxrObjectId{.id = 0, .type = 0},  // Subscriber, also kein write
-     .dr_id =
-       uxrObjectId{
-         .id = to_underlying(TopicIndex::SPEED_SUB), .type = UXR_DATAREADER_ID},  // Ein Reader!
+     .dr_id = uxrObjectId{.id = to_underlying(TopicIndex::SPEED_SUB), .type = UXR_DATAREADER_ID},
+     .topic_rw = Topic_rw::DataReader,
      .topic_name = "rt/ap/speed",
      .type_name = "std_msgs::msg::dds_::Float32_",
      .qos =
@@ -130,6 +129,26 @@ constexpr struct AP_DDS_Client::Topic_table AP_DDS_Client::topics[] =
          .depth = 5,
        }},
 #endif
+
+#if AP_DDS_RANGE_PUB_ENABLED
+    {
+      .topic_id = to_underlying(TopicIndex::RANGE_PUB),
+      .pub_id = to_underlying(TopicIndex::RANGE_PUB),
+      .sub_id = to_underlying(TopicIndex::RANGE_PUB),
+      .dw_id = uxrObjectId{.id = to_underlying(TopicIndex::RANGE_PUB), .type = UXR_DATAWRITER_ID},
+      .dr_id = uxrObjectId{.id = to_underlying(TopicIndex::RANGE_PUB), .type = UXR_DATAREADER_ID},
+      .topic_rw = Topic_rw::DataWriter,
+      .topic_name = "rt/ap/range",
+      .type_name = "sensor_msgs::msg::dds_::Range_",
+      .qos =
+        {
+          .durability = UXR_DURABILITY_VOLATILE,
+          .reliability = UXR_RELIABILITY_BEST_EFFORT,
+          .history = UXR_HISTORY_KEEP_LAST,
+          .depth = 5,
+        },
+    },
+#endif  // AP_DDS_RANGE_PUB_ENABLED
 
 #if AP_DDS_TIME_PUB_ENABLED
     {
@@ -474,7 +493,9 @@ constexpr struct AP_DDS_Client::Topic_table AP_DDS_Client::topics[] =
      .sub_id = to_underlying(TopicIndex::JOINT_STATE_PUB),
      .dw_id =
        uxrObjectId{.id = to_underlying(TopicIndex::JOINT_STATE_PUB), .type = UXR_DATAWRITER_ID},
-     .dr_id = uxrObjectId{.id = 0, .type = 0},
+     .dr_id =
+       uxrObjectId{.id = to_underlying(TopicIndex::JOINT_STATE_PUB), .type = UXR_DATAREADER_ID},
+     .topic_rw = Topic_rw::DataWriter,
      .topic_name = "rt/ap/joint_states",
      .type_name = "sensor_msgs::msg::dds_::JointState_",
      .qos =
@@ -485,23 +506,6 @@ constexpr struct AP_DDS_Client::Topic_table AP_DDS_Client::topics[] =
          .depth = 5,
        }},
 #endif  // AP_DDS_JOINT_STATE_PUB_ENABLED
-
-#if AP_DDS_RANGE_PUB_ENABLED
-    {.topic_id = to_underlying(TopicIndex::RANGE_PUB),
-     .pub_id = to_underlying(TopicIndex::RANGE_PUB),
-     .sub_id = to_underlying(TopicIndex::RANGE_PUB),
-     .dw_id = uxrObjectId{.id = to_underlying(TopicIndex::RANGE_PUB), .type = UXR_DATAWRITER_ID},
-     .dr_id = uxrObjectId{.id = 0, .type = 0},
-     .topic_name = "rt/ap/range",
-     .type_name = "sensor_msgs::msg::dds_::Range_",
-     .qos =
-       {
-         .durability = UXR_DURABILITY_VOLATILE,
-         .reliability = UXR_RELIABILITY_BEST_EFFORT,
-         .history = UXR_HISTORY_KEEP_LAST,
-         .depth = 5,
-       }},
-#endif  // AP_DDS_RANGE_PUB_ENABLED
 
 #if AP_DDS_JOY_SUB_ENABLED
     {

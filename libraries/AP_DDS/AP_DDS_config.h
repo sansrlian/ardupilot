@@ -58,6 +58,10 @@
 #define AP_DDS_DELAY_IMU_TOPIC_MS 5  // entspricht 200 Hz
 #endif
 
+#ifndef AP_DDS_DELAY_IMU_TOPIC_US
+#define AP_DDS_DELAY_IMU_TOPIC_US (AP_DDS_DELAY_IMU_TOPIC_MS * 1000U)
+#endif
+
 #ifndef AP_DDS_WHEEL_DATA_PUB_ENABLED
 #define AP_DDS_WHEEL_DATA_PUB_ENABLED 1
 #endif
