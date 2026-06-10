@@ -42,6 +42,18 @@
 #define AP_DDS_DELAY_NAV_ODOM_TOPIC_MS 50  // 20 Hz für Odometrie
 #endif
 
+#ifndef AP_DDS_DELAY_NAV_ODOM_FAST_MS
+#define AP_DDS_DELAY_NAV_ODOM_FAST_MS 20  // 50 Hz im Fast-Modus
+#endif
+
+#ifndef AP_DDS_NAV_ODOM_FAST_SUB_ENABLED
+#define AP_DDS_NAV_ODOM_FAST_SUB_ENABLED AP_DDS_NAV_ODOM_PUB_ENABLED
+#endif
+
+#ifndef AP_DDS_NAV_ODOM_FAST_SUB_TIMEOUT_MS
+#define AP_DDS_NAV_ODOM_FAST_SUB_TIMEOUT_MS 60000  // Mission-Toggle gültig für 60s
+#endif
+
 #ifndef AP_DDS_DELAY_JOINT_STATE_TOPIC_MS
 #define AP_DDS_DELAY_JOINT_STATE_TOPIC_MS 20  // 50 Hz für JointState
 #endif

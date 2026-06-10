@@ -29,6 +29,10 @@
 #include "std_msgs/msg/Float32.h"
 #endif
 
+#if AP_DDS_NAV_ODOM_FAST_SUB_ENABLED
+#include "std_msgs/msg/Bool.h"
+#endif
+
 #if AP_DDS_IMU_PUB_ENABLED
 #include "sensor_msgs/msg/Imu.h"
 #endif  // AP_DDS_IMU_PUB_ENABLED
@@ -252,12 +256,18 @@ private:
 #if AP_DDS_NAV_ODOM_PUB_ENABLED
   void write_nav_odom_topic();
   void update_topic(nav_msgs_msg_Odometry & msg);
-#endif
-
-#if AP_DDS_NAV_ODOM_PUB_ENABLED
   nav_msgs_msg_Odometry odom_topic{};
   uint32_t last_nav_odom_time_ms = 0;
-  static constexpr uint16_t DELAY_NAV_ODOM_TOPIC_MS = 50;  // 20 Hz
+  bool last_nav_odom_fast_mode = false;
+  AP_Int8 nav_odom_fast;
+  bool nav_odom_fast_active() const;
+#endif
+
+#if AP_DDS_NAV_ODOM_FAST_SUB_ENABLED
+  static std_msgs_msg_Bool rx_nav_odom_fast_topic;
+  uint32_t last_nav_odom_fast_sub_ms = 0;
+  bool nav_odom_fast_sub_value = false;
+  void handle_nav_odom_fast_topic();
 #endif
 
 #if AP_DDS_CLOCK_PUB_ENABLED

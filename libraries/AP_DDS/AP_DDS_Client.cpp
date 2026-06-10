@@ -68,8 +68,13 @@
 std_msgs_msg_Float32 AP_DDS_Client::rx_speed_topic{};
 #endif
 
+#if AP_DDS_NAV_ODOM_FAST_SUB_ENABLED
+std_msgs_msg_Bool AP_DDS_Client::rx_nav_odom_fast_topic{};
+#endif
+
 #if AP_DDS_NAV_ODOM_PUB_ENABLED
 static constexpr uint16_t DELAY_NAV_ODOM_TOPIC_MS = AP_DDS_DELAY_NAV_ODOM_TOPIC_MS;
+static constexpr uint16_t DELAY_NAV_ODOM_FAST_MS = AP_DDS_DELAY_NAV_ODOM_FAST_MS;
 #endif
 
 #if AP_DDS_JOINT_STATE_PUB_ENABLED
@@ -206,6 +211,15 @@ const AP_Param::GroupInfo AP_DDS_Client::var_info[]{
   // @Increment: 1
   // @User: Standard
   AP_GROUPINFO("_MAX_RETRY", 6, AP_DDS_Client, ping_max_retry, 10),
+
+#if AP_DDS_NAV_ODOM_PUB_ENABLED
+  // @Param: _ODOM_FAST
+  // @DisplayName: DDS nav/odom fast publish rate
+  // @Description: When enabled, nav/odom is published at the fast rate configured by AP_DDS_DELAY_NAV_ODOM_FAST_MS. Can also be toggled at runtime via the rt/ap/nav_odom_fast ROS 2 topic.
+  // @Values: 0:Normal,1:Fast
+  // @User: Standard
+  AP_GROUPINFO("_ODOM_FAST", 7, AP_DDS_Client, nav_odom_fast, 0),
+#endif  // AP_DDS_NAV_ODOM_PUB_ENABLED
 
   AP_GROUPEND};
 
@@ -912,6 +926,24 @@ void AP_DDS_Client::update_topic(nav_msgs_msg_Odometry & msg)
 }
 #endif  // AP_DDS_NAV_ODOM_PUB_ENABLED
 
+#if AP_DDS_NAV_ODOM_PUB_ENABLED
+bool AP_DDS_Client::nav_odom_fast_active() const
+{
+  bool fast = nav_odom_fast.get() != 0;
+#if AP_DDS_NAV_ODOM_FAST_SUB_ENABLED
+  if (last_nav_odom_fast_sub_ms != 0) {
+    const uint32_t now_ms = AP_HAL::millis();
+    if (
+      AP_DDS_NAV_ODOM_FAST_SUB_TIMEOUT_MS == 0 ||
+      (now_ms - last_nav_odom_fast_sub_ms) <= AP_DDS_NAV_ODOM_FAST_SUB_TIMEOUT_MS) {
+      fast = fast || nav_odom_fast_sub_value;
+    }
+  }
+#endif  // AP_DDS_NAV_ODOM_FAST_SUB_ENABLED
+  return fast;
+}
+#endif  // AP_DDS_NAV_ODOM_PUB_ENABLED
+
 #if AP_DDS_JOINT_STATE_PUB_ENABLED
 
 void AP_DDS_Client::update_topic(sensor_msgs_msg_JointState & msg)
@@ -1174,6 +1206,17 @@ void AP_DDS_Client::on_topic(
       break;
     }
 #endif  // AP_DDS_SPEED_SUB_ENABLED
+
+#if AP_DDS_NAV_ODOM_FAST_SUB_ENABLED
+    case topics[to_underlying(TopicIndex::NAV_ODOM_FAST_SUB)].dr_id.id: {
+      const bool success = std_msgs_msg_Bool_deserialize_topic(ub, &rx_nav_odom_fast_topic);
+      if (success == false) {
+        break;
+      }
+      handle_nav_odom_fast_topic();
+      break;
+    }
+#endif  // AP_DDS_NAV_ODOM_FAST_SUB_ENABLED
   }
 }
 
@@ -2347,7 +2390,14 @@ void AP_DDS_Client::update()
 #endif  // AP_DDS_RANGE_PUB_ENABLED
 
 #if AP_DDS_NAV_ODOM_PUB_ENABLED
-  if (cur_time_ms - last_nav_odom_time_ms > DELAY_NAV_ODOM_TOPIC_MS) {
+  const bool nav_odom_fast_mode = nav_odom_fast_active();
+  if (nav_odom_fast_mode != last_nav_odom_fast_mode) {
+    last_nav_odom_fast_mode = nav_odom_fast_mode;
+    last_nav_odom_time_ms = 0;
+  }
+  const uint16_t nav_odom_delay_ms =
+    nav_odom_fast_mode ? DELAY_NAV_ODOM_FAST_MS : DELAY_NAV_ODOM_TOPIC_MS;
+  if (cur_time_ms - last_nav_odom_time_ms > nav_odom_delay_ms) {
     update_topic(odom_topic);
     last_nav_odom_time_ms = cur_time_ms;
     write_nav_odom_topic();
@@ -2436,3 +2486,11 @@ void AP_DDS_Client::handle_speed_topic()
   last_speed_rx_time_ms = AP_HAL::millis64();
 }
 #endif
+
+#if AP_DDS_NAV_ODOM_FAST_SUB_ENABLED
+void AP_DDS_Client::handle_nav_odom_fast_topic()
+{
+  last_nav_odom_fast_sub_ms = AP_HAL::millis();
+  nav_odom_fast_sub_value = rx_nav_odom_fast_topic.data;
+}
+#endif  // AP_DDS_NAV_ODOM_FAST_SUB_ENABLED

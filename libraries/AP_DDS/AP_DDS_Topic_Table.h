@@ -30,6 +30,10 @@ enum class TopicIndex : uint8_t
   SPEED_SUB,
 #endif
 
+#if AP_DDS_NAV_ODOM_FAST_SUB_ENABLED
+  NAV_ODOM_FAST_SUB,
+#endif
+
 #if AP_DDS_RANGE_PUB_ENABLED
   RANGE_PUB,
 #endif
@@ -129,6 +133,26 @@ constexpr struct AP_DDS_Client::Topic_table AP_DDS_Client::topics[] =
          .depth = 5,
        }},
 #endif
+
+#if AP_DDS_NAV_ODOM_FAST_SUB_ENABLED
+    {.topic_id = to_underlying(TopicIndex::NAV_ODOM_FAST_SUB),
+     .pub_id = to_underlying(TopicIndex::NAV_ODOM_FAST_SUB),
+     .sub_id = to_underlying(TopicIndex::NAV_ODOM_FAST_SUB),
+     .dw_id = uxrObjectId{.id = 0, .type = 0},
+     .dr_id =
+       uxrObjectId{
+         .id = to_underlying(TopicIndex::NAV_ODOM_FAST_SUB), .type = UXR_DATAREADER_ID},
+     .topic_rw = Topic_rw::DataReader,
+     .topic_name = "rt/ap/nav_odom_fast",
+     .type_name = "std_msgs::msg::dds_::Bool_",
+     .qos =
+       {
+         .durability = UXR_DURABILITY_VOLATILE,
+         .reliability = UXR_RELIABILITY_BEST_EFFORT,
+         .history = UXR_HISTORY_KEEP_LAST,
+         .depth = 5,
+       }},
+#endif  // AP_DDS_NAV_ODOM_FAST_SUB_ENABLED
 
 #if AP_DDS_RANGE_PUB_ENABLED
     {
