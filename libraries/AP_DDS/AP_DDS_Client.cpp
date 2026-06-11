@@ -1083,7 +1083,7 @@ bool AP_DDS_Client::start(void)
 
   if (!hal.scheduler->thread_create(
         FUNCTOR_BIND_MEMBER(&AP_DDS_Client::main_loop, void), "DDS", 8192,
-        AP_HAL::Scheduler::PRIORITY_NET, 1)) {
+        AP_HAL::Scheduler::PRIORITY_IO, 1)) {
     GCS_SEND_TEXT(MAV_SEVERITY_ERROR, "%s Thread create failed", msg_prefix);
     return false;
   }
