@@ -1083,7 +1083,7 @@ bool AP_DDS_Client::start(void)
 
   if (!hal.scheduler->thread_create(
         FUNCTOR_BIND_MEMBER(&AP_DDS_Client::main_loop, void), "DDS", 8192,
-        AP_HAL::Scheduler::PRIORITY_IO, 1)) {
+        AP_HAL::Scheduler::PRIORITY_NET, 1)) {
     GCS_SEND_TEXT(MAV_SEVERITY_ERROR, "%s Thread create failed", msg_prefix);
     return false;
   }
@@ -1943,7 +1943,7 @@ void AP_DDS_Client::write_time_topic()
     ucdrBuffer ub{};
     const uint32_t topic_size = builtin_interfaces_msg_Time_size_of_topic(&time_topic, 0);
     uxr_prepare_output_stream(
-      &session, reliable_out, topics[to_underlying(TopicIndex::TIME_PUB)].dw_id, &ub, topic_size);
+      &session, best_effort_out, topics[to_underlying(TopicIndex::TIME_PUB)].dw_id, &ub, topic_size);
     const bool success = builtin_interfaces_msg_Time_serialize_topic(&ub, &time_topic);
     if (!success) {
       // TODO sometimes serialization fails on bootup. Determine why.
@@ -2230,7 +2230,7 @@ void AP_DDS_Client::write_clock_topic()
     ucdrBuffer ub{};
     const uint32_t topic_size = rosgraph_msgs_msg_Clock_size_of_topic(&clock_topic, 0);
     uxr_prepare_output_stream(
-      &session, reliable_out, topics[to_underlying(TopicIndex::CLOCK_PUB)].dw_id, &ub, topic_size);
+      &session, best_effort_out, topics[to_underlying(TopicIndex::CLOCK_PUB)].dw_id, &ub, topic_size);
     const bool success = rosgraph_msgs_msg_Clock_serialize_topic(&ub, &clock_topic);
     if (!success) {
       // TODO sometimes serialization fails on bootup. Determine why.
