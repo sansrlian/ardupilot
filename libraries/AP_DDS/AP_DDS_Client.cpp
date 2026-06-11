@@ -1659,8 +1659,14 @@ void AP_DDS_Client::main_loop(void)
     uint8_t num_pings_missed{0};
     bool had_ping_reply{false};
     while (connected) {
+#if AP_DDS_IMU_PUB_ENABLED
+      publish_imu_if_due();
+#endif  // AP_DDS_IMU_PUB_ENABLED
       // publish topics (no delay here; uxr_run_session_time yields in update())
       update();
+#if AP_DDS_IMU_PUB_ENABLED
+      publish_imu_if_due();
+#endif  // AP_DDS_IMU_PUB_ENABLED
 
       // check ping response
       if (session.on_pong_flag == PONG_IN_SESSION_STATUS) {
@@ -1999,7 +2005,7 @@ void AP_DDS_Client::write_battery_state_topic()
     ucdrBuffer ub{};
     const uint32_t topic_size = sensor_msgs_msg_BatteryState_size_of_topic(&battery_state_topic, 0);
     uxr_prepare_output_stream(
-      &session, reliable_out, topics[to_underlying(TopicIndex::BATTERY_STATE_PUB)].dw_id, &ub,
+      &session, best_effort_out, topics[to_underlying(TopicIndex::BATTERY_STATE_PUB)].dw_id, &ub,
       topic_size);
     const bool success = sensor_msgs_msg_BatteryState_serialize_topic(&ub, &battery_state_topic);
     if (!success) {
@@ -2114,6 +2120,24 @@ void AP_DDS_Client::write_imu_topic()
       // TODO sometimes serialization fails on bootup. Determine why.
       // AP_HAL::panic("FATAL: DDS_Client failed to serialize");
     }
+  }
+}
+void AP_DDS_Client::publish_imu_if_due()
+{
+  const auto cur_time_us = AP_HAL::micros64();
+  constexpr uint8_t MAX_CATCH_UP = 3;
+  uint8_t published = 0;
+
+  while (published < MAX_CATCH_UP &&
+         cur_time_us - last_imu_time_us >= DELAY_IMU_TOPIC_US) {
+    update_topic(imu_topic);
+    last_imu_time_us += DELAY_IMU_TOPIC_US;
+    write_imu_topic();
+    published++;
+  }
+
+  if (cur_time_us - last_imu_time_us >= DELAY_IMU_TOPIC_US) {
+    last_imu_time_us = cur_time_us;
   }
 }
 #endif  // AP_DDS_IMU_PUB_ENABLED
@@ -2299,15 +2323,6 @@ void AP_DDS_Client::update()
 {
   WITH_SEMAPHORE(csem);
   const auto cur_time_ms = AP_HAL::millis64();
-
-#if AP_DDS_IMU_PUB_ENABLED
-  const auto cur_time_us = AP_HAL::micros64();
-  if (cur_time_us - last_imu_time_us >= DELAY_IMU_TOPIC_US) {
-    update_topic(imu_topic);
-    last_imu_time_us = cur_time_us;
-    write_imu_topic();
-  }
-#endif  // AP_DDS_IMU_PUB_ENABLED
 
 #if AP_DDS_TIME_PUB_ENABLED
   if (cur_time_ms - last_time_time_ms > DELAY_TIME_TOPIC_MS) {

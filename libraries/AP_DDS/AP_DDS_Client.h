@@ -230,6 +230,7 @@ private:
   uint64_t last_imu_time_us{0};
   static void update_topic(sensor_msgs_msg_Imu & msg);
   void write_imu_topic();
+  void publish_imu_if_due();
 #endif  // AP_DDS_IMU_PUB_ENABLED
 
 #if AP_DDS_RANGE_PUB_ENABLED
